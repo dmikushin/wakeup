@@ -1,0 +1,25 @@
+(dp0
+S'description'
+p1
+S'Play music off of Last.fm'
+p2
+sS'script'
+p3
+S'LastfmPlayer/play_lastfm.sh'
+p4
+sS'text_output'
+p5
+I00
+sS'data_items'
+p6
+(lp7
+S'lastfm'
+p8
+asS'has_preferences'
+p9
+I01
+sS'name'
+p10
+S'Last.fm'
+p11
+s.

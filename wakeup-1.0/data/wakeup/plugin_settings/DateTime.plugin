@@ -1,0 +1,27 @@
+(dp0
+S'description'
+p1
+S'Give the date and time'
+p2
+sS'script'
+p3
+S'DateTime/date_time.sh'
+p4
+sS'text_output'
+p5
+I01
+sS'data_items'
+p6
+(lp7
+S'date'
+p8
+aS'time'
+p9
+asS'has_preferences'
+p10
+I01
+sS'name'
+p11
+S'Date and Time'
+p12
+s.

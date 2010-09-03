@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Wakeup
+Exec=wakeup-settings
+Icon=appointment-new
+Type=Application
+Categories=GNOME;GTK;Utility;
+Comment=A talking and fully customizable alarm clock that will operate from poweroff

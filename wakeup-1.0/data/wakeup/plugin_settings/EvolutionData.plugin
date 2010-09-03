@@ -1,0 +1,27 @@
+(dp0
+S'description'
+p1
+S'Read Evolution schedule and tasks'
+p2
+sS'script'
+p3
+S'EvolutionData/read_evolution.sh'
+p4
+sS'text_output'
+p5
+I01
+sS'data_items'
+p6
+(lp7
+S'todo'
+p8
+aS'schedule'
+p9
+asS'has_preferences'
+p10
+I01
+sS'name'
+p11
+S'Evolution Data'
+p12
+s.

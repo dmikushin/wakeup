@@ -1,0 +1,721 @@
+#!/usr/bin/env python
+
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gtk.glade
+from pango import SCALE
+import os
+import re
+import sys
+from commands import getstatusoutput, getoutput
+import copy
+import pickle
+
+# Global file variables
+wakeup_script = "/usr/bin/wakeup"
+setalarm_script = "/usr/bin/setalarm"
+wakeup_folder = "/usr/share/wakeup/"
+setnextalarmscript = os.path.join(wakeup_folder, "setnextalarm.py")
+script_folder = os.path.join(wakeup_folder, "plugin_scripts")
+pluginsettingsfolder = os.path.join(wakeup_folder, "plugin_settings")
+defaultpluginsfolder = os.path.join(wakeup_folder, "default_plugin_confs")
+home = os.environ['HOME']
+homewakeupfolder = os.path.join(home, ".wakeup")
+dontshowintrofile = os.path.join(homewakeupfolder, "dontshowintro")
+tmpPlayfile = os.path.join(homewakeupfolder, "playable_tmp")
+voicelistscript = os.path.join(wakeup_folder, "voice_list.sh")
+
+# import alarm data type
+sys.path.append(wakeup_folder)
+from alarm import alarm
+
+# import plugin preferences GUI python scripts
+for root, dirs, files in os.walk(script_folder):
+    for d in dirs:
+        sys.path.append(os.path.join(root, d))
+        if os.path.exists(os.path.join(root, d, d + ".py")):
+            exec("import " + d)
+
+class Wakeup:
+
+    def __init__(self):
+
+        # GUI Initialization #
+
+        self.wTree = gtk.Builder()
+        self.wTree.add_from_file(os.path.join(wakeup_folder, "wakeup.glade"))
+        self.wTree.connect_signals(self)
+        self.window = self.wTree.get_object("window")
+        self.plugin_window = self.wTree.get_object("plugin_window")
+        self.help = self.wTree.get_object("help_window")
+        '''Main window objects'''
+        self.treemodel           = self.wTree.get_object("liststore1")
+        self.treeview            = self.wTree.get_object("treeview1")
+        self.textbox             = self.wTree.get_object("textbuffer1")
+        self.textview            = self.wTree.get_object("textview1")
+        self.parentVbox          = self.wTree.get_object("vbox10")
+        self.alarmTreeView       = self.wTree.get_object("treeview4")
+        self.alarmlist           = self.wTree.get_object("liststore5")
+        self.TimeColumn          = self.wTree.get_object("cellrenderertext7")
+        self.RecurrenceColumn    = self.wTree.get_object("cellrenderertext8")
+        self.BootColumn          = self.wTree.get_object("cellrenderertoggle3")
+        self.prefsbutton         = self.wTree.get_object("button7")
+        self.playbutton          = self.wTree.get_object("button2")
+        self.removebutton        = self.wTree.get_object("toolbutton2")
+        '''Help window objects'''
+        self.help_tabs           = self.wTree.get_object("notebook2")
+        '''Dialog box -- after applying alarm'''
+        self.dialogWindow        = self.wTree.get_object("dialog1")
+        self.dialogMessage       = self.wTree.get_object("label13")
+        '''Intro Dialog Box'''
+        self.introdialog         = self.wTree.get_object("dialog2")
+        self.showintro           = self.wTree.get_object("checkbutton10")
+        self.label               = self.wTree.get_object("label1")
+        '''Plugin preferences window objects'''
+        self.treemodel2          = self.wTree.get_object("liststore2")
+        self.voicelist           = self.wTree.get_object("liststore4")
+        self.voiceTreeView       = self.wTree.get_object("treeview3")
+        self.voicetogglerenderer = self.wTree.get_object("cellrenderertoggle2")
+        self.voicetextrenderer   = self.wTree.get_object("cellrenderertext5")
+        self.useothervoice       = self.wTree.get_object("checkbutton9")
+        self.othervoicecommand   = self.wTree.get_object("entry2")
+        self.voicelabel          = self.wTree.get_object("label17")
+        self.startcomputer       = self.wTree.get_object("checkbutton11")
+        self.preferences_tabs    = self.wTree.get_object("notebook1")
+        self.time_frame          = self.wTree.get_object("hbox6")
+        self.hour_spin           = self.wTree.get_object("spinbutton1")
+        self.minute_spin         = self.wTree.get_object("spinbutton2")
+        self.hour_adj            = self.wTree.get_object("adjustment2")
+        self.minute_adj          = self.wTree.get_object("adjustment3")
+        self.recurrence_frame    = self.wTree.get_object("vbox6")
+        self.recurrence          = self.wTree.get_object("checkbutton1")
+        self.every_rec_list_box  = self.wTree.get_object("combobox1")
+        self.every_rec_list      = self.wTree.get_object("liststore3")
+        self.dom_label           = self.wTree.get_object("label4")
+        self.dom_spin            = self.wTree.get_object("spinbutton3")
+        self.volume_adj          = self.wTree.get_object("adjustment1")
+        self.cron_radio          = self.wTree.get_object("radiobutton2")
+        self.every_radio         = self.wTree.get_object("radiobutton1")
+        self.cron_entry          = self.wTree.get_object("entry1")
+        self.plugin_prefs_button = self.wTree.get_object("button12")
+        self.pluginTreeView      = self.wTree.get_object("treeview2")
+        self.active_list         = self.wTree.get_object("cellrenderertoggle1")
+        self.days = list() # store the weekday checkbuttons in a list
+        for i in range(2,9):
+            self.days.append(eval("self.wTree.get_object(\"checkbutton"
+                                   + str(i) + "\")"))
+
+        '''Visual Tweaks'''
+        # Set default window icon (applies to plugin preference window also)
+        gtk.window_set_default_icon_name(self.window.get_icon_name())
+        # Set the preferences window as modal to the main window
+        self.plugin_window.set_modal(True)
+        self.plugin_window.set_transient_for(self.window)
+        # Center the 'Active' checkbuttons in the plugins list
+        self.active_list.set_property('width', 40)
+        self.active_list.set_property('xalign', 0.5)
+        # Center the Time, Recurrence, and Boot columns in the alarms list
+        self.TimeColumn.set_property('xalign', 0.5)
+        self.RecurrenceColumn.set_property('xalign', 0.5)
+        self.RecurrenceColumn.set_property('width', 80)
+        self.BootColumn.set_property('xalign', 0.5)
+        self.BootColumn.set_property('width', 40)
+        # allow for checking which plugin is selected (can't do through glade)
+        self.plugin_selection = self.pluginTreeView.get_selection()
+        self.plugin_selection.connect('changed', self.on_plugin_selected)
+        # allow for checking which voice is selected (can't do through glade)
+        self.voice_selection = self.voiceTreeView.get_selection()
+        self.voice_selection.connect('changed', self.on_voice_selected)
+        # allow for checking which alarm is selected (can't do through glade)
+        self.alarm_selection = self.alarmTreeView.get_selection()
+        self.alarm_selection.connect('changed', self.on_alarm_selected)
+        self.old_alarm_selected = -1 # which list position is currently selected
+        # tooltip text for voice list descriptions
+        self.voiceTreeView.set_tooltip_column(2)
+        # Make voice toggle look like radio buttons (can't do through glade)
+        self.voicetogglerenderer.set_radio(True)
+        self.voicetogglerenderer.set_property('width', 25)
+        self.voicetogglerenderer.set_property('xalign', 0.5)
+        # make stock buttons show images if possible
+        try:
+            gtk.settings_get_for_screen(gtk.gdk.Screen()).\
+                set_property("gtk-button-images", True)
+        except: pass
+
+
+        # Class Variables Initialization #
+
+        self.currentalarm = -1
+        self.alarms = list()
+        self.alarmfolders = list()
+        self.alarmsjustcreated = list()
+        self.voicedescriptions = {}
+        self.plugins = dict()
+ 
+        # Initialize Plugins #
+        for pluginfile in os.listdir(pluginsettingsfolder):
+            filename = os.path.join(pluginsettingsfolder, pluginfile)
+            match = re.search(".*\.plugin$", filename)
+            if match:
+                plugin_file = open(filename)
+                plugin = pickle.load(plugin_file)
+                plugin_file.close()
+                name = plugin['name']
+                del plugin['name']
+                plugin['script'] = os.path.join(script_folder, plugin['script'])
+                self.plugins[name] = plugin
+                myiter = self.treemodel2.insert_after(None, None)
+                self.treemodel2.set_value(myiter, 0, name)
+                self.treemodel2.set_value(myiter, 1, plugin['description'])
+                self.treemodel2.set_value(myiter, 2, True)
+
+        '''Create plugins folder if it doesn't exist'''
+        # create main wakeup folder in home directory if it doesn't exist
+        if not os.path.exists(homewakeupfolder):
+            os.mkdir(homewakeupfolder)
+
+        # Voice List Initialization #
+        output = getoutput(voicelistscript)
+        voicesanddescripts = re.split("\n", output)
+        for i in range(0, len(voicesanddescripts)):
+            if i % 2 == 1: continue
+            description = voicesanddescripts[i+1]
+            voice = voicesanddescripts[i]
+            myiter = self.voicelist.insert_after(None, None)
+            if len(voicesanddescripts[i+1]) > 50:
+                self.voicelist.set_value(myiter, 2, description)
+                description = description[0:50] + "..."
+            self.voicelist.set_value(myiter, 0, description)
+            self.voicedescriptions[description] = voice
+
+
+        # Alarms Settings Initialization #
+
+        for foldername in os.listdir(homewakeupfolder):
+            '''Create alarms'''
+            folder = os.path.join(homewakeupfolder, foldername)
+            if not re.search("alarm\d+$", folder) or not os.path.isdir(folder):
+                continue
+            self.add_alarm(None, foldername)
+            '''Read alarm settings'''
+            print foldername + ": " + self.alarms[-1].read_settings(os.path.join(folder, "wakeup_settings"))
+            self.textbox.set_text(self.alarms[-1].get_property("text"))
+
+            # Initialize Plugin Preferences #
+            
+            '''Create plugins folder if it doesn't exist'''
+            pluginsfolder = os.path.join(folder, "plugins")
+            if not os.path.exists(pluginsfolder):
+                os.mkdir(pluginsfolder)
+            for folder in os.listdir(defaultpluginsfolder):
+                defaultpluginfolder = os.path.join(defaultpluginsfolder, folder)
+                pluginfolder = os.path.join(pluginsfolder, folder)
+                if os.path.isdir(defaultpluginfolder) and not os.path.exists(pluginfolder):
+                    os.system("cp -R " + defaultpluginfolder + " " + pluginfolder)
+            '''Setup the GUI alarm list'''
+            myiter = self.alarmlist.get_iter_first()
+            self.change_alarmlist_item(self.alarms[-1], myiter)
+            self.alarm_selection.select_path(self.alarmlist.get_path(myiter))
+        
+        # For reference when deleting removed alarms on clicking "Apply"
+        self.oldalarmfolders = list(self.alarmfolders)
+        self.oldalarms = copy.deepcopy(self.alarms)
+
+        if len(self.alarms) == 0:
+            self.add_alarm(None)
+
+        '''Show intro dialog'''
+        if not os.path.exists(dontshowintrofile):
+            self.introdialog.show()
+
+    '''Workaround for auto-wrap glade labels not resizing'''
+    def _label_size_allocate(self, widget, allocation, data=None):
+        layout = widget.get_layout()
+        lw_old, lh_old = layout.get_size()
+        # fixed width labels
+        if lw_old / SCALE == allocation.width:
+            return
+        # set wrap width to the pango.Layout of the labels
+        # the - 2 is for breathing room for some fonts.
+        layout.set_width((allocation.width - 2) * SCALE)
+        lw, lh = layout.get_size()  # lw is unused.
+        if lh_old != lh:
+            widget.set_size_request(-1, lh / SCALE)
+
+    '''Add item to list of available data items (treeview in main window)'''
+    def add_data_item(self, value):
+        myiter = self.treemodel.append()
+        self.treemodel.set_value(myiter,0,value)
+        return myiter
+
+    '''Exit'''
+    def on_window_destroy (self, widget, data=None):
+        if os.path.exists(tmpPlayfile):
+            os.remove(tmpPlayfile)
+        gtk.main_quit()
+        gtk.main_quit()
+    '''Callback for clicking Close in main window'''
+    def cancel_clicked (self, widget, data=None):
+        for i in range(0, len(self.alarmsjustcreated)):
+            if self.alarmsjustcreated[i]:
+                os.system("rm -R " + self.alarmfolders[i])
+        self.on_window_destroy(self, widget)
+
+    '''Callback for clicking Apply in main window'''
+    def apply_clicked (self, widget, data=None):
+        for i in  range(0, len(self.alarmsjustcreated)):
+            self.alarmsjustcreated[i] = False
+        self.on_alarm_selected(None) # make sure current text is saved
+        for i in range(0, len(self.alarms)):
+            if not os.path.exists(self.alarmfolders[i]):
+                os.mkdir(self.alarmfolders[i])
+                os.system("cp -R " + defaultpluginsfolder + " " + os.path.join(self.alarmfolders[i], "plugins"))
+            folder = re.search("alarm\d+", self.alarmfolders[i]).group(0)
+            self.alarms[i].save_playfile(os.path.join(self.alarmfolders[i], "playable_text"), folder,
+                                         False, self.plugins)
+            self.alarms[i].save_settings(os.path.join(self.alarmfolders[i], "wakeup_settings"))
+        # delete removed alarms
+        for folder in self.oldalarmfolders:
+            if not folder in self.alarmfolders:
+                os.system("rm -r " + folder)
+        hadbootalarms = False
+        for alarm in self.oldalarms:
+            if alarm.get_property("wakecomputer") == True:
+                hadbootalarms = True
+            else:
+                alarmfolder = self.oldalarmfolders[self.oldalarms.index(alarm)]
+                foldernumber = re.search("\d+", alarmfolder).group(0)
+                command = alarm.get_remove_command(self.oldalarmfolders[self.oldalarms.index(alarm)], wakeup_script)
+                os.system(command)
+        # Set the alarms and remove removed boot alarms
+        hasbootalarms = False
+        success = True
+        outscript = ""
+        for alarm in self.alarms:
+            if not alarm.get_property("wakecomputer"):
+                folder = self.alarmfolders[self.alarms.index(alarm)]
+                command = alarm.get_setalarm_command(folder, setalarm_script, wakeup_script)
+                [status, output] = getstatusoutput(command)
+                if output != "":
+                    success = False
+            else:
+                hasbootalarms = True
+        if hasbootalarms or hadbootalarms: #note also removes removed boot alarms.
+            [status, output] = getstatusoutput('gksudo --message ' + \
+            '"Root privaleges are necessary to set and remove alarms that wake your computer" ' + \
+            setnextalarmscript + " $USER")
+            if status != 0:
+                success = False
+                outscript += output
+            else:
+                if not len(self.alarms) == 0 and not output == "":
+                    outscript += "Next computer wakeup at: " + output
+        if success == False:
+            outscript = "Unable to set all alarms. Check time preferences.\n" + outscript 
+        else:
+            outscript = "All alarms set successfully.\n" + outscript
+        # reset alarm list
+        self.oldalarmfolders = list(self.alarmfolders)
+        self.oldalarms = copy.deepcopy(self.alarms)
+        self.dialogMessage.set_text(outscript.strip())
+        self.dialogWindow.show()
+            
+    '''Callback for clicking Okay in the dialog window'''
+    def on_dialog_ok_clicked(self, widget, data=None):
+        self.dialogWindow.hide()
+        self.dialogWindow.resize(1,1)
+        return True
+    '''Callback for clicking Play in main window'''
+    def on_play_clicked (self, widget, data=None):
+        self.on_alarm_selected(None)
+        alarm = self.alarms[self.currentalarm]
+        folder = re.search("alarm\d+", self.alarmfolders[self.currentalarm]).group(0)
+        alarm.save_playfile(tmpPlayfile, folder, True, self.plugins)
+        os.system(wakeup_script + " $USER test &")
+    '''Callback for clicking Help in main window'''
+    def help_clicked (self, widget, data=None):
+        if widget.get_label() == "gtk-about":
+            self.help_tabs.set_current_page(1)   
+        else:
+            self.help_tabs.set_current_page(0)
+        self.help.show()
+
+
+    '''Callback for clicking Preferences in main window'''
+    def preferences_clicked (self, widget, data=None):
+        if self.plugin_window.get_property('visible'):
+            return
+        alarm = self.alarms[self.currentalarm]
+        time = alarm.get_property("time")
+        self.hour_adj.set_value(time[0])
+        self.minute_adj.set_value(time[1])
+        recurrence = alarm.get_property("recurrence")
+        if recurrence != "Cron" and recurrence != "None":
+            recurrences = dict(Minute=0, Hour=1, Day=2, Week=3, Month=4)
+            self.every_rec_list_box.set_active(recurrences[recurrence])
+        self.recurrence.set_active(recurrence != "None")
+        self.cron_radio.set_active(recurrence == "Cron")
+        self.every_radio.set_active(recurrence != "Cron")
+        day_recurrences = alarm.get_property("day_recurrences")
+        for day in self.days:
+            day.set_active(day_recurrences[day.get_label()])
+        if alarm.get_property("recurrence") == "Month":
+            self.dom_spin.set_value(float(alarm.get_property("dom")))
+        else:
+            self.dom_spin.set_value(1)
+        (minute, hour, dom, mon, dow) = alarm.get_cronvalues()
+        self.cron_entry.set_text(str(minute) + " " + str(hour) + " "
+                               + str(dom) + " " + str(mon) + " " + str(dow))
+        self.startcomputer.set_active(alarm.get_property("wakecomputer"))
+        self.othervoicecommand.set_text(alarm.get_property("otherspeechtool"))
+        self.useothervoice.set_active(alarm.get_property("otherspeechtool") != "none")
+        item = self.voicelist.get_iter_first()
+        while item:
+            self.voicelist.set_value(item, 1, False)
+            if self.voicedescriptions[self.voicelist.get_value(item, 0)] == alarm.get_property("voice"):
+                self.voicelist.set_value(item, 1, True)
+                self.voice_selection.select_path(self.voicelist.get_path(item))
+            item = self.voicelist.iter_next(item)   
+        self.volume_adj.set_value(alarm.get_property("volume"))
+        self._set_active_GUI_settings_elements()
+        item = self.treemodel2.get_iter_first()
+        plugins = alarm.get_property("activeplugins")
+        if item:
+            while item:
+                name = self.treemodel2.get_value(item, 0)
+                self.treemodel2.set_value(item, 2, name in plugins)
+                item = self.treemodel2.iter_next(item)
+        self.plugin_window.show()
+        self.preferences_tabs.set_current_page(0)
+
+
+    def on_preferences_esc_pressed(self, widget, data=None):
+        if data.keyval == 65307: #ESC key
+            self.on_plugins_cancel_clicked(widget)
+    '''Callback for clicking Cancel in plugins window'''
+    def on_plugins_cancel_clicked (self, widget, data=None):
+        # Restore the backup of previously active plugins and remake plugin list
+        self.plugin_window.hide()
+        return True
+
+    '''Callback for clicking Ok in plugins window'''
+    def on_plugins_ok_clicked (self, widget, data=None):
+        alarm = self.alarms[self.currentalarm]
+        # Set all alarm properties
+        alarm.set_property("time", [int(self.hour_spin.get_value()),
+                                             int(self.minute_spin.get_value())])
+        alarm.set_property("recurrs", self.recurrence.get_active())
+        if not self.recurrence.get_active():
+            alarm.set_property("recurrence", "None")
+        elif self.every_radio.get_active():
+            active = self.every_rec_list_box.get_active()
+            rec_pos = self.every_rec_list.get_iter_from_string(str(active))
+            alarm.set_property("recurrence", self.every_rec_list.get_value(rec_pos, 0))
+        elif self.cron_radio.get_active():
+            alarm.set_property("recurrence", "Cron")
+            alarm.set_property("cronvalue", self.cron_entry.get_text())
+        for checkbutton in self.days:
+            day = checkbutton.get_property("label")
+            active = checkbutton.get_property("active")
+            alarm.set_property("day_recurrences['" + day + "']", active)
+        alarm.set_property("dom", self.dom_spin.get_value())
+        for row in self.voicelist:
+            if row[1]:
+                alarm.set_property("voice", self.voicedescriptions[row[0]])
+                break
+        if self.useothervoice.get_active():
+            alarm.set_property("otherspeechtool",
+                                        self.othervoicecommand.get_text())
+        else:
+            alarm.set_property("otherspeechtool", "none")
+        alarm.set_property("wakecomputer", self.startcomputer.get_active())
+        alarm.set_property("volume", self.volume_adj.get_value())
+        # set active plugins
+        activeplugins = list()
+        item = self.treemodel2.get_iter_first()
+        if item:
+            while item:
+                name = self.treemodel2.get_value(item, 0)
+                if self.treemodel2.get_value(item, 2):
+                    activeplugins.append(name)
+                item = self.treemodel2.iter_next(item)
+        alarm.set_property("activeplugins", activeplugins)
+        myiter = self.alarmlist.get_iter_from_string(str(self.currentalarm))
+        self.change_alarmlist_item(alarm, myiter)
+        self.on_alarm_selected(None)
+        self.plugin_window.hide()
+
+    '''Callback on selecting a plugin from the plugins list'''
+    def on_plugin_selected(self, widget, data=None):
+        model, paths = widget.get_selected_rows()
+        position_selected = self.treemodel2.get_iter_from_string(str(paths[0][0]))
+        plugin = self.treemodel2.get_value(position_selected, 0)
+        self.plugin_prefs_button.set_sensitive(self.plugins[plugin]['has_preferences'])
+    '''Callback for clicking preferences in the plugins window'''
+    def on_plugin_preferences_clicked(self, widget, data=None):
+        model, paths = self.plugin_selection.get_selected_rows()
+        position_selected = self.treemodel2.get_iter_from_string(str(paths[0][0]))
+        plugin = self.treemodel2.get_value(position_selected, 0)
+        # run the plugin's preferences python script. Plugin script must
+        # be named the same as its folder and the object must also have that
+        # same name. Only allow a script to be run if no other plugin script is
+        # running
+        try: self.prefsOpen
+        except: self.prefsOpen = False #if first time clicking preferences
+        if not self.prefsOpen:
+            plugin = re.search("/([^/]*)/[^/]*$", self.plugins[plugin]['script']).group(1)
+            os.chdir(os.path.join(script_folder, plugin))
+            self.prefsOpen = True
+            pluginfolder = os.path.join(self.alarmfolders[self.currentalarm], "plugins", plugin)
+            exec("pluginPref = " + plugin + "." + plugin + "('" + pluginfolder + "')")
+            pluginPref.window.set_modal(True)
+            pluginPref.window.set_transient_for(self.plugin_window)
+            # TODO: This doesn't seem to work at the moment, so all plugin
+            # glade files have the hint set to dialog individually.
+            # pluginPref.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
+            pluginPref.main()
+            self.prefsOpen = False
+
+    '''Callback for toggling availability of a plugin by checking a box'''
+    def on_plugin_toggled (self, widget, data=None):
+        position_toggled = self.treemodel2.get_iter_from_string(data)
+        new_value = not self.treemodel2.get_value(position_toggled, 2)
+        plugin = self.treemodel2.get_value(position_toggled, 0)
+        self.treemodel2.set(position_toggled, 2, new_value)
+    '''Callback for toggling availability of a plugin by double-clicking name'''
+    def on_pluginlist_clicked (self, widget, data=None, treeviewcolumn=None):
+        # redirect to on_plugin_toggled
+        self.on_plugin_toggled (widget, str(data[0]))
+
+    '''Callback for double-clicking a data item (from treeview in main window)'''
+    def on_datalist_clicked (self, widget, data=None, treeviewcolumn=None):
+        # insert the doubled-clicked data item into the text
+        position_clicked = self.treemodel.get_iter_from_string(str(data[0]))
+        value = self.treemodel.get_value(position_clicked, 0)
+        bounds = self.textbox.get_selection_bounds()
+        if (bounds):
+            self.textbox.delete(bounds[0], bounds[1])
+        self.textbox.insert_at_cursor(value)
+
+
+    '''Callback for checking "Recurrs" in the preferences window'''
+    def on_recurrence_toggled (self, widget, data=None):
+        self.recurrence_frame.set_sensitive(widget.get_active())
+        self._set_active_GUI_settings_elements()
+    '''Callback for changing recurrence combobox'''
+    def on_every_recurrence_changed (self, widget, data=None):
+        self._set_active_GUI_settings_elements()
+    '''Callback for selecting cron format'''
+    def cron_radio_toggled (self, widget, data=None):
+        self._set_active_GUI_settings_elements()
+    '''Callback for selecting non-cron format'''
+    def every_radio_toggled (self, widget, data=None):
+        self._set_active_GUI_settings_elements()
+
+    '''Set up the alarm General GUI settings properly (what's sensitive)'''
+    def _set_active_GUI_settings_elements (self):
+        cron_active = self.cron_radio.get_active()
+        recurrs = self.recurrence.get_active()
+        self.cron_entry.set_sensitive(cron_active)
+        self.every_rec_list_box.set_sensitive(not cron_active)
+        active = self.every_rec_list_box.get_active()
+        position = self.every_rec_list.get_iter_from_string(str(active))
+        value = self.every_rec_list.get_value(position, 0)
+        for day in self.days:
+            day.set_sensitive(value == "Week" and not cron_active)
+        self.dom_label.set_sensitive(value == "Month" and not cron_active)
+        self.dom_spin.set_sensitive(value == "Month" and not cron_active)
+        self.hour_spin.set_sensitive(not (recurrs and (value == "Hour" or value == "Minute" or cron_active)))
+        self.minute_spin.set_sensitive(not (recurrs and (value == "Minute" or cron_active)))
+            
+    '''Callback for selecting a voice in the Voices tab of Preferences window'''
+    def on_voice_selected(self, widget, data=None):
+        model, paths = self.voice_selection.get_selected_rows()
+        position_selected = self.voicelist.get_iter_from_string(str(paths[0][0]))
+        self._set_voice(position_selected)
+    '''Callback for selecting the radiobutton off a voice in the Voices tab'''
+    def on_voice_toggled(self, widget, data=None):
+        position_toggled = self.voicelist.get_iter_from_string(data)
+        self._set_voice(position_toggled)
+    '''Set voice'''
+    def _set_voice(self, position):
+        description = self.voicelist.get_value(position, 0)
+        voice = self.voicedescriptions[description]
+        item = self.voicelist.get_iter_first()
+        while item:
+            if self.voicelist.get_value(item, 1):
+                self.voicelist.set_value(item, 1, False)
+            item = self.voicelist.iter_next(item)   
+        self.voicelist.set_value(position, 1, True)
+    '''Callback for toggling "use other speech tool" in Voices tab'''
+    def on_nonfestival_toggled(self, widget, data=None):
+        active = widget.get_active()
+        self.othervoicecommand.set_sensitive(active)
+        self.voiceTreeView.set_sensitive(not active)
+        self.voicelabel.set_sensitive(not active)
+        
+        
+    def on_help_esc_pressed (self, widget, data=None):
+        if data.keyval == 65307: #ESC key
+            self.on_help_ok_clicked(widget)
+    def on_help_ok_clicked (self, widget, data=None):
+        self.help.hide()
+        return True
+
+
+    '''Callback for clicking ok in the introduction dialog'''
+    def on_introdialog_ok_clicked(self, widget, data=None):
+        if not self.showintro.get_active():
+            file = open(dontshowintrofile, "w")
+            file.close()
+        self.introdialog.hide()
+    
+    
+    '''Callback for clicking the multiple alarms expander'''
+    def on_expander_clicked(self, widget, data=None):
+        if widget.get_expanded():
+            widget.set_label("Edit multiple alarms...")
+            self.parentVbox.set_child_packing(widget, False, False, 0, "start")
+        else:
+            widget.set_label("Hide multiple alarms...")
+            self.parentVbox.set_child_packing(widget, True, True, 0, "start")
+    '''Callback for clicking to add an alarm'''
+    def add_alarm(self, widget, data=None):
+        self.alarms.append(alarm())
+        folderspresent = list()
+        for i in self.alarmfolders:
+            folderspresent.append(int(re.search("\d+", i).group(0)))
+        for foldername in os.listdir(homewakeupfolder):
+            folder = os.path.join(homewakeupfolder, foldername)
+            match = re.search("alarm(\d+)$", folder)
+            if not match or not os.path.isdir(folder): continue
+            if not int(match.group(1)) in folderspresent:
+                folderspresent.append(int(match.group(1)))
+        old_num_alarmfolders = len(self.alarmfolders)
+        newalarmfolder = ""
+        if data != None:
+            newalarmfolder = os.path.join(homewakeupfolder, data)
+        elif len(folderspresent) != 0:
+            for i in range(0, max(folderspresent)):
+                if not i in folderspresent:
+                    newalarmfolder = os.path.join(homewakeupfolder, "alarm" + str(i))
+                    break
+            if len(self.alarmfolders) == old_num_alarmfolders and newalarmfolder == "":
+                newalarmfolder = os.path.join(homewakeupfolder, "alarm" + str(max(folderspresent) + 1))
+        else:
+            newalarmfolder = os.path.join(homewakeupfolder, "alarm0")
+        self.alarmfolders.append(newalarmfolder)
+        if len(self.alarms[-1].get_property("activeplugins")) == 0:
+            plugins = list()
+            for pluginname in self.plugins:
+                plugins.append(pluginname)
+            self.alarms[-1].set_property("activeplugins", plugins)
+        myiter = self.alarmlist.append()
+        if len(folderspresent) == 0:
+            startiter, enditer = self.textbox.get_bounds()
+            self.alarms[-1].set_property("text", self.textbox.get_text(startiter, enditer))
+        self.change_alarmlist_item(self.alarms[-1], myiter)
+        self.alarm_selection.select_path(self.alarmlist.get_path(myiter))
+        self.alarmsjustcreated.append(not os.path.exists(self.alarmfolders[-1]))
+        if self.alarmsjustcreated[-1]:
+            os.mkdir(self.alarmfolders[-1])
+            os.system("cp -R " + defaultpluginsfolder + " " + os.path.join(self.alarmfolders[-1], "plugins"))
+    '''Update alarm list entry'''
+    def change_alarmlist_item(self, alarm, treeiter):
+        text = re.sub("\s+", " ", alarm.get_property("text"))
+        if len(text) > 50:
+            text = text[0:50] + "..."
+        else:
+            text = text[0:50]
+        time = alarm.get_property("time")
+        time_text = ""
+        recurrence = alarm.get_property("recurrence")
+        if recurrence == "Hour" or recurrence == "Minute":
+            time_text += "*:"
+        else:
+            time_text += str(time[0]) + ":"
+        if recurrence == "Minute":
+            time_text += "*"
+        else:
+            if time[1] < 10:
+                time_text += "0" + str(time[1])
+            else:
+                time_text += str(time[1])
+        self.alarmlist.set_value(treeiter, 0, text)
+        if not recurrence == "Cron":
+            self.alarmlist.set_value(treeiter, 1, time_text)
+        else:
+            cron_values = re.split(" ", alarm.get_property("cronvalue"))
+            self.alarmlist.set_value(treeiter, 1, cron_values[1] + ":" + cron_values[0])
+        self.alarmlist.set_value(treeiter, 2, alarm.get_property("recurrence"))
+        self.alarmlist.set_value(treeiter, 3, alarm.get_property("wakecomputer"))
+        
+    '''Callback for clicking to remove an alarm'''
+    def remove_alarm(self, widget, data=None):
+        pos = int(self.currentalarm)
+        if self.alarmsjustcreated[pos]:
+            os.system("rm -R " + self.alarmfolders[pos])
+        del self.alarmsjustcreated[pos]
+        position_selected = self.alarmlist.get_iter_from_string(str(pos))
+        if pos != 0:
+            myiter = self.alarmlist.get_iter_from_string(str(pos - 1))
+            self.alarm_selection.select_path(self.alarmlist.get_path(myiter))
+        elif len(self.alarmlist) != 1:
+            myiter = self.alarmlist.get_iter_from_string(str(pos + 1))
+            self.alarm_selection.select_path(self.alarmlist.get_path(myiter))
+            self.old_alarm_selected = 0
+            self.currentalarm = 0
+        else:
+            self.textbox.set_text("")
+            self.textview.set_sensitive(False)
+            self.old_alarm_selected = -1
+            self.treemodel.clear()
+            self.treeview.set_sensitive(False)
+            self.prefsbutton.set_sensitive(False)
+            self.playbutton.set_sensitive(False)
+            self.removebutton.set_sensitive(False)
+        del self.alarmlist[pos]
+        del self.alarms[pos]
+        del self.alarmfolders[pos]
+    '''Callback for selecting an alarm from the list'''
+    def on_alarm_selected(self, widget, data=None):
+        model, paths = self.alarm_selection.get_selected_rows()
+        if len(paths) == 0: return
+        self.textview.set_sensitive(True)
+        self.treeview.set_sensitive(True)
+        self.prefsbutton.set_sensitive(True)
+        self.playbutton.set_sensitive(True)
+        self.removebutton.set_sensitive(True)
+        self.currentalarm = paths[0][0]
+        position_selected = self.alarmlist.get_iter_from_string(str(self.currentalarm))
+        alarm = self.alarms[self.currentalarm]
+        if self.old_alarm_selected != -1:
+            oldpos = self.alarmlist.get_iter_from_string(str(self.old_alarm_selected))
+            oldalarm = self.alarms[self.old_alarm_selected]
+            startiter, enditer = self.textbox.get_bounds()
+            oldalarm.set_property("text", self.textbox.get_text(startiter, enditer))
+            self.change_alarmlist_item(oldalarm, oldpos)
+        self.textbox.set_text(alarm.get_property("text"))
+        self.change_alarmlist_item(alarm, position_selected)
+        self.old_alarm_selected = self.currentalarm
+        # load data item list
+        self.treemodel.clear()
+        for pluginname in self.plugins.keys():
+            if pluginname in alarm.get_property("activeplugins"):
+                for item in self.plugins[pluginname]['data_items']:
+                    self.add_data_item("$" + item)
+
+    def on_introdialog_destroy(self, widget, data=None):
+        self.introdialog.hide()
+    
+    
+    '''Run the GUI'''
+    def main(self):
+        gtk.main()
+        
+        
+'''Run the program'''
+if __name__ == "__main__":
+    wake = Wakeup()
+    wake.main()

@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# initialize environment variables
+pid=$$
+usr=$1
+home=$(/bin/grep $usr /etc/passwd | /bin/sed -r 's/.*:\/(.+):[^:]*/\/\1/')
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:$home/bin/
+
+# allow running as both root and non-root
+if [[ `whoami` == "root" ]]; then
+    dosudo="sudo -u $usr"
+fi
+
+# start dbus (necessary for running alarm while not logged in)
+eval `eval "$dosudo dbus-launch --sh-syntax"`
+    
+# set volume
+eval "$(grep "volume" $home/.wakeup/wakeup_settings)"
+/usr/bin/amixer set Master unmute $volume\%
+
+# function to get pid of child processes
+function get_ids
+{
+    a=($(ps -o pid,ppid ax | awk "{ if ( \$2 == $1) { print \$1 }}"))
+    echo -n "${a[@]} "
+    for i in ${a[@]}; do get_ids $i; done
+}
+
+function stop
+{
+    y=($(get_ids $pid) $DBUS_SESSION_BUS_PID)
+    kill ${y[@]} &
+    exit 0
+}
+
+# allow the user to end it all
+while [ ! ]; do
+    if [[ "$(who | grep -o -m 1 $usr)" == $usr ]]; then
+        eval "snooze=$($dosudo /usr/share/wakeup/stopalarm.py)"
+        if [[ $snooze == 0 ]]; then
+            if [[ $dosudo != "" ]]; then
+                /usr/share/wakeup/setnextalarm.py $usr
+            fi
+            stop
+        else
+            if [[ $dosudo != "" ]]; then
+                if [[ $snooze -le 5 ]]; then offset="-o 1"; fi
+                /usr/bin/setalarm -u $(date -d "+$snooze min" "+%s") $offset
+                dosudo="sudo"
+            fi
+            tmpfile=/tmp/wake
+            eval "$dosudo crontab -l >$tmpfile"
+            snoozetime=$(date -d "+$snooze min" "+%M %H %d %m %w")
+            echo "$snoozetime DISPLAY=:0 /usr/bin/wakeup $1 $2 >/dev/null 2>&1"\
+                  "#entered by setnextalarm" >>$tmpfile
+            eval "$dosudo crontab $tmpfile; rm $tmpfile"
+            stop
+        fi
+    else continue
+    fi
+done &
+
+
+# play the alarm
+export DBUS_SESSION_BUS_ADDRESS PATH
+filename="$home/.wakeup/alarm$2/playable_text"
+if [[ $2 == "test" ]]; then filename="$home/.wakeup/playable_tmp"; fi
+chmod +x $filename
+echo "About to play the text..."
+$filename $usr
+# Finish everything if alarm finishes
+stop
