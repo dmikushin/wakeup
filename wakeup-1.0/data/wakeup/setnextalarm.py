@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+# Using setalarm, finds the earliest alarm in the future which requires
+# a computer wakeup and sets the computer to wake up and run that alarm. 
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import sys
 import os

@@ -1,4 +1,8 @@
 #!/bin/bash
+# Output a list of "voicename\ndescription" for each voice available to
+# festival. Uses voice name as description if no description found.
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 out1=/tmp/voice_out1
 out2=/tmp/voice_out2
@@ -13,7 +17,7 @@ echo -n ''
 done >/dev/null 2>&1
 
 echo "(pprintf (voice.list) (fopen \"$out1\" \"w\"))" | festival_client
-voices=($(cat $out1 | sed 's/[()]//'))
+voices=($(cat $out1 | sed 's/[()]//g'))
 
 for voice in ${voices[@]}; do
     echo "(pprintf (voice.description '$voice) (fopen \"$out2\" \"w\"))" | festival_client

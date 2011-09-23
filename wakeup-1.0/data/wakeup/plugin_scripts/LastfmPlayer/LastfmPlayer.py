@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# plugin GUI preferences class for LastfmPlayer
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
 pygtk.require('2.0')
@@ -17,6 +20,7 @@ class LastfmPlayer:
         self.username = self.wTree.get_object("entry1")
         self.password = self.wTree.get_object("entry2")
         self.station = self.wTree.get_object("entry3")
+        self.duration = self.wTree.get_object("entry4")
         self.password_file = os.path.join(os.environ['HOME'], '.shell-fm/shell-fm.rc')
 
         self.settingsblank = False
@@ -33,15 +37,18 @@ class LastfmPlayer:
             old_username = re.search("username\s*=\s*(.*)\s*password", self.lines).group(1)
             old_password = re.search("password\s*=\s*(.*)\s*", self.lines).group(1)
             old_station = re.search("default-radio=lastfm://(.*)\s*", self.lines).group(1)
+            old_duration = re.search("#duration\s*=\s*(.*)\s*", self.lines).group(1)
         except:
             old_password = ""
             old_username = ""
             old_station = ""
+            old_duration = ""
             self.settingsblank = True
         lfs_file.close()
         self.username.set_text(old_username)
         self.password.set_text(old_password)
         self.station.set_text(old_station)
+        self.duration.set_text(old_duration)
             
 
     '''On Clicking Ok'''
@@ -52,11 +59,14 @@ class LastfmPlayer:
             self.lines = re.sub("password\s*=\s*.*\s*", "password=" \
                 + self.password.get_text() + "\n", self.lines)
             self.lines = re.sub("default-radio=lastfm://(.*)\s*", \
-                "default-radio=lastfm://" + self.station.get_text(), self.lines)
+                "default-radio=lastfm://" + self.station.get_text() + "\n", self.lines)
+            self.lines = re.sub("#duration\s*=\s*.*\s*", "#duration=" \
+                + self.duration.get_text() + "\n", self.lines)
         else:
             self.lines = "username=" + self.username.get_text() + "\n" \
                        + "password=" + self.password.get_text() + "\n" \
-                       + "default-radio=lastfm://=" + self.station.get_text()
+                       + "default-radio=lastfm://=" + self.station.get_text() + "\n" \
+                       + "#duration=" + self.duration.get_text()
         
         lfs_file = open(self.password_file, "w")
         lfs_file.write(self.lines)

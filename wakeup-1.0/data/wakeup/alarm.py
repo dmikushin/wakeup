@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# alarm data type class used by wakeup-settings and setnextalarm.
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import datetime, re, os, pickle
 days_dict = dict(Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6)

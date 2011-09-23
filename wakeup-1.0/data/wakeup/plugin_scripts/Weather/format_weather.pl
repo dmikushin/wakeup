@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+# helper script for get_weather.sh that formats weather from weather-util
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 my $plugin_file = "/home/$ARGV[1]/.wakeup/$ARGV[2]/plugins/Weather/Weather.config";
 open(my $file, $plugin_file);

@@ -1,4 +1,7 @@
 #!/bin/bash
+# Runs a given alarm set by wakeup-settings for a given user.
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 # initialize environment variables
 pid=$$
@@ -13,10 +16,16 @@ fi
 
 # start dbus (necessary for running alarm while not logged in)
 eval `eval "$dosudo dbus-launch --sh-syntax"`
-    
+
 # set volume
-eval "$(grep "volume" $home/.wakeup/wakeup_settings)"
-/usr/bin/amixer set Master unmute $volume\%
+# see http://ubuntuforums.org/showthread.php?t=1796713
+volume=$(grep -A 2 "volume" $home/.wakeup/alarm$2/wakeup_settings | grep "F" | sed 's/F//')
+/usr/bin/amixer set Master $volume% unmute
+/usr/bin/amixer set Master $volume% unmute
+/usr/bin/amixer set Headphone unmute
+/usr/bin/amixer set Speaker unmute
+/usr/bin/amixer set PCM 100% unmute
+
 
 # function to get pid of child processes
 function get_ids
@@ -36,6 +45,7 @@ function stop
 # allow the user to end it all
 while [ ! ]; do
     if [[ "$(who | grep -o -m 1 $usr)" == $usr ]]; then
+        sleep 2
         eval "snooze=$($dosudo /usr/share/wakeup/stopalarm.py)"
         if [[ $snooze == 0 ]]; then
             if [[ $dosudo != "" ]]; then

@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# plugin GUI preferences class for GmailCounter
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
 pygtk.require('2.0')

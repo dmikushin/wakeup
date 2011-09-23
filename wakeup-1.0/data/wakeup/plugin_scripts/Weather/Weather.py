@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# plugin GUI preferences class for Weather
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
 pygtk.require('2.0')
@@ -6,7 +9,7 @@ import gtk
 import gtk.glade
 import os
 import re
-import commands
+import subprocess, threading
 
 class Weather:
 
@@ -14,7 +17,6 @@ class Weather:
         self.wTree = gtk.Builder()
         self.wTree.add_from_file("Weather.glade")
         self.window = self.wTree.get_object("window1")
-#        self.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
         self.wTree.connect_signals(self)
         self.manual_id = self.wTree.get_object("entry1")
         self.set_manual = self.wTree.get_object("checkbutton1")
@@ -27,29 +29,32 @@ class Weather:
         old_temp_units = re.search("temperature_units\s*=\s*(.*)\s*", self.lines).group(1) != "F"
         old_wind_units = re.search("wind_units\s*=\s*(.*)\s*", self.lines).group(1) != "mph"
         old_location = re.search("location\s*=\s*(.*)\s*", self.lines).group(1)
-        self.auto_location = commands.getoutput('''settings=$(gconftool-2 --get /apps/panel/applets/clock_screen0/prefs/cities) 
-              echo $settings | grep -oP \"code=\\\"\\w*\\\" current=\\\"true\\"\" | grep -oP \"[A-Z]{4}\"''')
         self.temp_units.set_active(old_temp_units)
         self.wind_units.set_active(old_wind_units)
+        
         if old_location == "none":
-            self.manual_id.set_text(self.auto_location)
+            thread = self.ipThread(self.manual_id)
+            thread.start()
         else:
             self.manual_id.set_text(old_location)
-        if not old_location == self.auto_location and not old_location == "none":
+        if not old_location == "none":
             self.manual_id.set_sensitive(False)
             self.set_manual.set_active(True)
+
+    # Thread so we don't have to wait for autolocation to be found
+    class ipThread (threading.Thread):
+        def __init__(self, manual_id):
+            self.location = manual_id
+            threading.Thread.__init__(self)
+        def run(self):
+            ip_script = '/usr/share/wakeup/plugin_scripts/Weather/id_by_ip.sh'
+            ip_process = subprocess.Popen(ip_script, stdout=subprocess.PIPE)
+            self.location.set_text(ip_process.communicate()[0][:-1])
+
 
     '''On Checking to set weather ID manually'''
     def on_manualID_toggled(self, widget, data=None):
         self.manual_id.set_sensitive(widget.get_active())
-
-    '''On changing temperature units'''
-    def on_tempUnits_changed(self, widget, data=None):
-        pass
-
-    '''On changing wind units'''
-    def on_windUnits_changed(self, widget, data=None):
-        pass
 
     '''On Clicking Ok'''
     def on_ok_clicked(self, widget, data=None):
@@ -87,4 +92,5 @@ class Weather:
 
     '''Run the GUI'''
     def main(self):
+        gtk.gdk.threads_init()
         gtk.main()

@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+# Display GUI dialog from which the user can stop or snooze an alarm.
+# Output of the script is snooze time in minutes (0=stop). Output is
+# read by wakeup.
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
 pygtk.require('2.0')
