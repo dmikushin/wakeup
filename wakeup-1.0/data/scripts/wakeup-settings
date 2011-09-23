@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Runs the GUI for user to set alarms and their preferences.
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
 pygtk.require('2.0')
@@ -11,6 +14,8 @@ import sys
 from commands import getstatusoutput, getoutput
 import copy
 import pickle
+import threading
+import subprocess
 
 # Global file variables
 wakeup_script = "/usr/bin/wakeup"
@@ -176,19 +181,8 @@ class Wakeup:
             os.mkdir(homewakeupfolder)
 
         # Voice List Initialization #
-        output = getoutput(voicelistscript)
-        voicesanddescripts = re.split("\n", output)
-        for i in range(0, len(voicesanddescripts)):
-            if i % 2 == 1: continue
-            description = voicesanddescripts[i+1]
-            voice = voicesanddescripts[i]
-            myiter = self.voicelist.insert_after(None, None)
-            if len(voicesanddescripts[i+1]) > 50:
-                self.voicelist.set_value(myiter, 2, description)
-                description = description[0:50] + "..."
-            self.voicelist.set_value(myiter, 0, description)
-            self.voicedescriptions[description] = voice
-
+        voicethread = self.voicelistThread(self)
+        voicethread.start()
 
         # Alarms Settings Initialization #
 
@@ -228,6 +222,25 @@ class Wakeup:
         '''Show intro dialog'''
         if not os.path.exists(dontshowintrofile):
             self.introdialog.show()
+
+    # Thread so we don't have to wait for autolocation to be found
+    class voicelistThread (threading.Thread):
+        def __init__(self, mainSelf):
+            self.window = mainSelf
+            threading.Thread.__init__(self)
+        def run(self):
+            output = subprocess.check_output(voicelistscript)
+            voicesanddescripts = re.split("\n", output)
+            for i in range(0, len(voicesanddescripts)-1):
+                if i % 2 == 1: continue
+                description = voicesanddescripts[i+1]
+                voice = voicesanddescripts[i]
+                myiter = self.window.voicelist.insert_after(None, None)
+                if len(voicesanddescripts[i+1]) > 50:
+                    self.window.voicelist.set_value(myiter, 2, description)
+                    description = description[0:50] + "..."
+                self.window.voicelist.set_value(myiter, 0, description)
+                self.window.voicedescriptions[description] = voice
 
     '''Workaround for auto-wrap glade labels not resizing'''
     def _label_size_allocate(self, widget, allocation, data=None):
@@ -712,6 +725,7 @@ class Wakeup:
     
     '''Run the GUI'''
     def main(self):
+        gtk.gdk.threads_init()
         gtk.main()
         
         

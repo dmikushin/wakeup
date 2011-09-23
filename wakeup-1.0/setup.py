@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 from distutils.core import setup
 import os
@@ -22,7 +24,7 @@ setup(name='wakeup',
       description='Fully customizable and extensible talking alarm clock',
       author='David Glass',
       author_email='dsglass@gmail.com',
-      url='http://wakeupalarm.sourceforge.net/',
+      url='https://launchpad.net/wakeup',
       license='GPL v3',
       scripts=['data/scripts/wakeup-settings',
                'data/scripts/wakeup',

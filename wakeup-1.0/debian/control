@@ -4,16 +4,14 @@ Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: David Glass <dsglass@gmail.com>
 Build-Depends: cdbs (>= 0.4.62), debhelper (>= 7), python (>=2.4), python-support
-XS-Python-Version: >= 2.4
-Standards-Version: 3.9.1
-Homepage: http://wakeupalarm.sourceforge.net/
+Standards-Version: 3.9.2
+Homepage: https://launchpad.net/wakeup
 
 Package: wakeup
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, weather-util, python-evolution, python-dateutil, festival, perl, gconf2, python-feedparser, curl, python-glade2, gksu
-Recommends: shell-fm
-Suggests: hebcal, mplayer
-Description: Fully customizable and extensible talking alarm clock.
+Depends: ${misc:Depends}, ${python:Depends}, weather-util, python-evolution, python-dateutil, python-vobject, python-feedparser, python-glade2, festival, perl, curl, gksu, shell-fm, mpg123
+Suggests: hebcal
+Description: Fully customizable and extensible talking alarm clock
  This package has a complete graphical front end with which a user can set an
  alarm to wake the computer - from poweroff if possible - and read a
  user-defined text. This text can grab relevant information (date, time,

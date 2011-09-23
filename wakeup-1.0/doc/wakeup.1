@@ -1,4 +1,4 @@
-.TH wakeup 1 "Version 1.0.0" "August 2010"
+.TH wakeup 1 "Version 1.0.0" "May 2011"
 .SH NAME
 wakeup
 \- A talking and fully customizable alarm clock
@@ -9,18 +9,18 @@ username alarmID
 .B wakeup
 plays an alarm for the given username, whose settings for the alarm can be
 modified using the
-.B wakeup-settings
+.B wakeup\-settings
 utility. The user's alarm that is run is specified by alarmID, which corresponds
 to the folder number in the user's wakeup settings folder ~/.wakeup. Alarm text
 and all associated options should be defined by running
-.B wakeup-settings
+.B wakeup\-settings
 as
 \fBusername\fR. Although it is possible to modify the settings directly by
 editing the files in ~/.wakeup/, this is not recommended and make cause you to
 lose alarm settings.
 .P
 An option in
-.B wakeup-settings
+.B wakeup\-settings
 allows the alarm to wake the computer (from poweroff if the bios
 allows). In this case,
 .B wakeup
@@ -33,18 +33,10 @@ work when you are not logged in, you will need to set the wireless network(s)
 you connect to so that they connect before you log in. This can be done through
 NetworkManager, by selecting a connection, clicking "Edit..." and checking
 "Available to all users."
-.SH "BUGS"
-If user stops alarm while last-fm is playing in the middle of the login process
-(but not after fully logged in), sound will not work until computer is rebooted.
-.P
-Evolution schedule and tasks plugin builds up instances of evolution-data-server
-and evolution-exchange-storage. There seem to be no harmful side effects. To
-clear these a workaround is to call evolution --force-shutdown, which will just
-restart evolution.
 .SH "SEE ALSO"
-\fBsetalarm\fR(1), \fBwakeup-settings\fR(1), \fBcron\fR, \fBcrontab\fR
+\fBsetalarm\fR(1), \fBwakeup\-settings\fR(1), \fBcron\fR, \fBcrontab\fR
 .SH AUTHOR
-The program and its documentation are copyrighted (c) 2010 by David Glass
+The program and its documentation are copyrighted (c) 2011 by David Glass
 <dsglass@gmail.com>. All rights reserved. They are distributed under the terms
-of the GNU General Public License.
+of the GNU General Public License version 3 or later.
 

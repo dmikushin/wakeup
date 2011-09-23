@@ -1,10 +1,10 @@
-.TH wakeup-settings 1 "Version 1.0.0" "August 2010"
+.TH wakeup\-settings 1 "Version 1.0.0" "May 2011"
 .SH NAME
-wakeup-settings
+wakeup\-settings
 \- GUI frontend to configure \fBwakeup\fR, a talking and fully customizable
 alarm clock
 .SH  SYNOPSIS
-.B wakeup-settings
+.B wakeup\-settings
 .SH DESCRIPTION
 This runs a graphical setting in which to edit the alarms run by
 .B wakeup.
@@ -12,11 +12,11 @@ The time, volume, plugin settings, etc. for all alarms can be set through this
 GUI. Given the "set computer to wake up for alarm" option, 
 .B wakeup
 is set by
-.B wakeup-settings
+.B wakeup\-settings
 to run from root's cron, and the alarms will run in this case even if no user is
 logged in. One must log in or be logged in to stop the alarm.
 Settings only pertain to the user who is running
-.B wakeup-settings.
+.B wakeup\-settings.
 .P
 Note that for any part of the alarm which depends on information from the web to
 work when you are not logged in, you will need to set the wireless network(s)
@@ -26,7 +26,7 @@ NetworkManager, by selecting a connection, clicking "Edit..." and checking
 .SH "SEE ALSO"
 \fBsetalarm\fR(1), \fBwakeup\fR(1), \fBcron\fR, \fBcrontab\fR
 .SH AUTHOR
-The program and its documentation are copyrighted (c) 2010 by David Glass
+The program and its documentation are copyrighted (c) 2011 by David Glass
 <dsglass@gmail.com>. All rights reserved. They are distributed under the terms
-of the GNU General Public License.
+of the GNU General Public License version 3 or later.
 

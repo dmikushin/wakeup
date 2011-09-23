@@ -1,31 +1,31 @@
-.TH setalarm 1 "Version 1.0.0" "August 2010"
+.TH setalarm 1 "Version 1.0.0" "May 2011"
 .SH NAME
 setalarm
 \- sets the system to start and run a script at specified times.
 .SH  SYNOPSIS
 .B setalarm
-[ -p ] [ [h]h:mm ] [ -o offset ] [ command ]
+[ \-p ] [ [h]h:mm ] [ \-o offset ] [ command ]
 
 .B setalarm
-[ -p ] [ -c m h dom mon dow ] [ -o offset ] [ command ]
+[ \-p ] [ \-c m h dom mon dow ] [ \-o offset ] [ command ]
 
 .B setalarm
-[ -p ] [ -u utc ] [ -o offset ] [ command ]
+[ \-p ] [ \-u utc ] [ \-o offset ] [ command ]
 
 .B setalarm
--d
+\-d
 .SH DESCRIPTION
 This should be run as root, unless using the
-.B -p
+.B \-p
 option. The time to wake the computer can be given in three possible formats.
 The simplest is just a time, written hh:mm or h:mm. This time is
 interpreted as the earliest time in the future when that time occurs.
 If the
-.B -c
-option is provided, a cron-formatted recurrence (minute hour day_of_month month
+.B \-c
+option is provided, a cron\-formatted recurrence (minute hour day_of_month month
 day_of_week) may follow. Special times such as "@hourly" are not accepted.
 With the
-.B -u
+.B \-u
 option, the time to wake the computer should be provided in UTC format.
 .P
 .B command
@@ -33,17 +33,17 @@ is run at the closest time in the future that matches the recurrence rules or at
 the time specified using an exact hh:mm or UTC time. For this to occur, the
 computer is woken up several minutes in advance to allow for boot time. By
 default, this "offset" is 5 minutes, but can be changed with the
-.B -o
+.B \-o
 option, in which case the computer is woken up
 .B offset
 minutes in advance. To ensure that the computer will wake given the
-.B -c
+.B \-c
 option, crontab entries are made in root's crontab to rerun
 .B setalarm
 as necessary.
 .P
 With the
-.B -p
+.B \-p
 option,
 .B setalarm
 will not make any changes to the system wake time or to root's crontab. Instead,
@@ -53,7 +53,7 @@ just prints the time, in UTC, at which the computer would be set to wake up with
 the given input.
 .P
 Given the
-.B -d
+.B \-d
 option,
 .B setalarm
 removes all alarms.
@@ -64,9 +64,9 @@ was created for use with
 generally usable as a convenient wrapper for setting the system wakeup (see
 http://www.mythtv.org/wiki/ACPI_Wakeup for details about ACPI wakeup)
 .SH "SEE ALSO"
-\fBwakeup\fR(1), \fBwakeup-settings\fR(1), \fBcron\fR, \fBcrontab\fR
+\fBwakeup\fR(1), \fBwakeup\-settings\fR(1), \fBcron\fR, \fBcrontab\fR
 .SH AUTHOR
-The program and its documentation are copyrighted (c) 2010 by David Glass
+The program and its documentation are copyrighted (c) 2011 by David Glass
 <dsglass@gmail.com>. All rights reserved. They are distributed under the terms
-of the GNU General Public License.
+of the GNU General Public License version 3 or later.
 

@@ -5,3 +5,4 @@ Icon=appointment-new
 Type=Application
 Categories=GNOME;GTK;Utility;
 Comment=A talking and fully customizable alarm clock that will operate from poweroff
+X-AppInstall-Package=wakeup

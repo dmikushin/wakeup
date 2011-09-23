@@ -1,6 +1,6 @@
 This work was created by:
 
-    David Glass <dsglass@gmail.com> on Sun, 04 Jul 2010 15:34:46 -0400
+    David Glass <dsglass@gmail.com> on Sun, 04 Jul 2011 15:34:46 -0400
 
 Upstream Author(s):
 
@@ -8,7 +8,7 @@ Upstream Author(s):
     
 Copyright:
 
-    <Copyright (C) 2010 David Glass>
+    <Copyright (C) 2011 David Glass>
 
 License:
 
@@ -31,6 +31,6 @@ Public License version 3 can be found in `/usr/share/common-licenses/GPL-3'.
 
 The Debian packaging is:
 
-    Copyright (C) 2010 David Glass <dsglass@gmail.com>
+    Copyright (C) 2011 David Glass <dsglass@gmail.com>
 
 and is licensed under the GPL version 3, see above.
