@@ -70,16 +70,20 @@ for cal in calendars:
         if hasattr(parsedTd, "percent_complete") and parsedTd.percent_complete != "100":
             todo_list.append(parsedTd)
 
-if "schedule" in to_output:
-    for ev in sorted(todays_events,key=lambda e: e.dtstart.value):
-        if not ev in all_day_events:
-            print ev.summary.value + u' at ' + ev.dtstart.value.strftime("%l:%M %p")
-        else:
-            print ev.summary.value
-    if not ev:
-        print "Nothing listed"
-if "todo" in to_output:
-    for td in todo_list:
-        print td.summary.value
-    if not td:
-        print "Nothing listed"
+for out in to_output:
+    if out == "schedule":
+        for ev in sorted(todays_events,key=lambda e: e.dtstart.value):
+            print ev.summary.value,
+            if not ev in all_day_events:
+                print u'at ' + ev.dtstart.value.strftime("%l:%M %p"),
+            if hasattr(ev, "location"):
+                print u'in ' + ev.location.value,
+            print ", ",
+        if not ev:
+            print "Nothing listed"
+    if out == "todo":
+        for td in todo_list:
+            print td.summary.value + u',',
+        if not todo_list:
+            print "Nothing listed"
+    print ""

@@ -1,3 +1,11 @@
+wakeup (1.0-0ubuntu3) oneiric; urgency=low
+
+  * Fixed reading only first item on schedule.
+  * Fixed mix-up of schedule and todo depending on which is called first.
+  * Added reading of event location.
+
+ -- David Glass <dsglass@gmail.com>  Tue, 27 Sep 2011 00:04:51 -0700
+
 wakeup (1.0-0ubuntu2) oneiric; urgency=low
 
   * Removed hard-coding of New Jersey in determing metar ID by IP
