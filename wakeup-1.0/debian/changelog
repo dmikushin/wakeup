@@ -1,3 +1,10 @@
+wakeup (1.0-0ubuntu4) oneiric; urgency=low
+
+  * Fixed lack of time zone in hebcalevents location auto-detect
+  * Fixed schedule not outputting "Nothing listed" when no events
+
+ -- David Glass <dsglass@gmail.com>  Fri, 07 Oct 2011 17:41:54 -0700
+
 wakeup (1.0-0ubuntu3) oneiric; urgency=low
 
   * Fixed reading only first item on schedule.

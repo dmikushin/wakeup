@@ -79,7 +79,7 @@ for out in to_output:
             if hasattr(ev, "location"):
                 print u'in ' + ev.location.value,
             print ", ",
-        if not ev:
+        if not todays_events:
             print "Nothing listed"
     if out == "todo":
         for td in todo_list:

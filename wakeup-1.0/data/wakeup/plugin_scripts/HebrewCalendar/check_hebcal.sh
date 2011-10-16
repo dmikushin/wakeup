@@ -20,6 +20,6 @@ for i in ${*:2}; do
 	    # put longitude and latitude in deg,min format. Hebcal requires that longitude sign is switched
 	    lat=$(echo $lat | perl -ne '$lat = abs($_); $deg = int($lat); $min = int(60 * ($lat - $deg)); print "$deg,$min"')
 	    long=$(echo $long | perl -ne '$long = abs($_); $deg = int($long); $min = int(60 * ($long - $deg)); $deg *= -1 if not /-/; print "$deg,$min"')
-	    echo $(hebcal -Toc -l $lat -L $long | sed /^[0-9].*/d); echo ""
+	    echo $(hebcal -Toc -l $lat -L $long -z $(date +%:::z) | sed /^[0-9].*/d); echo ""
     fi
 done
