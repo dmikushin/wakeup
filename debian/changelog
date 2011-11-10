@@ -1,24 +1,14 @@
-wakeup (1.0-0ubuntu4) oneiric; urgency=low
+wakeup (1.1-0ubuntu1) oneiric; urgency=low
 
   * Fixed lack of time zone in hebcalevents location auto-detect
   * Fixed schedule not outputting "Nothing listed" when no events
-
- -- David Glass <dsglass@gmail.com>  Fri, 07 Oct 2011 17:41:54 -0700
-
-wakeup (1.0-0ubuntu3) oneiric; urgency=low
-
   * Fixed reading only first item on schedule.
   * Fixed mix-up of schedule and todo depending on which is called first.
   * Added reading of event location.
-
- -- David Glass <dsglass@gmail.com>  Tue, 27 Sep 2011 00:04:51 -0700
-
-wakeup (1.0-0ubuntu2) oneiric; urgency=low
-
   * Removed hard-coding of New Jersey in determing metar ID by IP
   * Fixed inability to set volume when previously muted by user
 
- -- David Glass <dsglass@gmail.com>  Fri, 23 Sep 2011 13:30:52 -0700
+ -- David Glass <dsglass@gmail.com>  Wed, 09 Nov 2011 22:26:14 -0800
 
 wakeup (1.0-0ubuntu1) oneiric; urgency=low
 

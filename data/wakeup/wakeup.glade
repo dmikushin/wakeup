@@ -1453,7 +1453,7 @@ Each alarm's settings are completely independent. Click "Edit multiple alarms...
                 <property name="visible">True</property>
                 <property name="xpad">1</property>
                 <property name="ypad">1</property>
-                <property name="label" translatable="yes">&lt;big&gt;&lt;big&gt;&lt;big&gt;&lt;b&gt;Wakeup 1.0&lt;/b&gt;&lt;/big&gt;&lt;/big&gt;&lt;/big&gt;
+                <property name="label" translatable="yes">&lt;big&gt;&lt;big&gt;&lt;big&gt;&lt;b&gt;Wakeup 1.1&lt;/b&gt;&lt;/big&gt;&lt;/big&gt;&lt;/big&gt;
 
 Copyright (c) David Glass 2011
 &amp;lt;dsglass@gmail.com&amp;gt;
