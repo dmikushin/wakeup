@@ -44,7 +44,8 @@ function stop
 
 # allow the user to end it all
 while [ ! ]; do
-    if [[ "$(who | grep -o -m 1 $usr)" == $usr ]]; then
+    eval export $(grep --text -oP "DISPLAY=:[0-9\.]*" /proc/$(pgrep -n gnome-session)/environ)
+    if [[ $DISPLAY != "" ]]; then
         sleep 2
         eval "snooze=$($dosudo /usr/share/wakeup/stopalarm.py)"
         if [[ $snooze == 0 ]]; then
@@ -61,7 +62,7 @@ while [ ! ]; do
             tmpfile=/tmp/wake
             eval "$dosudo crontab -l >$tmpfile"
             snoozetime=$(date -d "+$snooze min" "+%M %H %d %m %w")
-            echo "$snoozetime DISPLAY=:0 /usr/bin/wakeup $1 $2 >/dev/null 2>&1"\
+            echo "$snoozetime /usr/bin/wakeup $1 $2 >/dev/null 2>&1"\
                   "#entered by setnextalarm" >>$tmpfile
             eval "$dosudo crontab $tmpfile; rm $tmpfile"
             stop
@@ -74,7 +75,7 @@ done &
 # play the alarm
 export DBUS_SESSION_BUS_ADDRESS PATH
 filename="$home/.wakeup/alarm$2/playable_text"
-if [[ $2 == "test" ]]; then filename="$home/.wakeup/playable_tmp"; fi
+if [[ $3 == "test" ]]; then filename="$home/.wakeup/playable_tmp"; fi
 chmod +x $filename
 echo "About to play the text..."
 $filename $usr

@@ -114,7 +114,7 @@ if [[ $1 == "-u" ]]; then
     fi
     crontab_time=`date -d @$wake_time "+%M %H %d %m %w"`
     # add to temporary cron file
-    echo "$crontab_time DISPLAY=:0 $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
+    echo "$crontab_time $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
     
 # for recurrent alarms
 elif [[ $1 == "-c" ]]; then
@@ -183,10 +183,10 @@ elif [[ $1 == "-c" ]]; then
     fi
     
     # add cron for setlarm that runs wtih the $wakeup_script and @reboot
-    echo "$2 $3 $4 $5 $6 DISPLAY=:0 $0 ${*/\*/\"*\"} >/dev/null 2>&1" >> $tmpfile
-    echo "@reboot DISPLAY=:0 $0 ${*/\*/\"*\"} >/dev/null 2>&1" >> $tmpfile
+    echo "$2 $3 $4 $5 $6 $0 ${*/\*/\"*\"} >/dev/null 2>&1" >> $tmpfile
+    echo "@reboot $0 ${*/\*/\"*\"} >/dev/null 2>&1" >> $tmpfile
     # add the cron-recurrent wakeup alarm to temporary cron file
-    echo "$2 $3 $4 $5 $6 DISPLAY=:0 $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
+    echo "$2 $3 $4 $5 $6 $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
 
 # for non-recurring alarms
 else
@@ -202,7 +202,7 @@ else
     # format $wakeup_time in crontab format.
     crontab_time=`date -d @$wake_time "+%M %H %d %m %w"`
     # add to temporary cron file
-    echo "$crontab_time DISPLAY=:0 $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
+    echo "$crontab_time $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
 fi
 
 # Actually set alarm and crontab #

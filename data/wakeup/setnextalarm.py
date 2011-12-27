@@ -65,14 +65,14 @@ mincron = crontimes[minindex]
 command = 'tmpfile=/tmp/setnextalarm_tmp.txt\n' + \
           'sudo crontab -l > $tmpfile\n' + \
           'sed -i /^.*setnextalarm.*$/d $tmpfile\n' + \
-          'echo \'' + mincron + ' DISPLAY=:0 ' + thisscript + \
+          'echo \'' + mincron + ' ' + thisscript + \
           ' >/dev/null 2>&1\' >> $tmpfile\n' + \
-          'echo \'@reboot DISPLAY=:0 ' + thisscript + \
+          'echo \'@reboot ' + thisscript + \
           ' >/dev/null 2>&1\' >> $tmpfile\n'
 for i in range(0, len(alarmtimes)):
     if alarmtimes[i] == minalarm:
         alarmnum = re.search("\d+$", alarmfolders[i]).group(0)
-        command += 'echo \'' + mincron + ' DISPLAY=:0 ' + \
+        command += 'echo \'' + mincron + ' ' + \
                    wakeup_script + " " + sys.argv[1] + " " + alarmnum + \
                    ' >/dev/null 2>&1 #entered by setnextalarm\' >> $tmpfile\n'
 command += 'sudo crontab $tmpfile\n' + \

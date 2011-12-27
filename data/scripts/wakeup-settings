@@ -345,7 +345,7 @@ class Wakeup:
         alarm = self.alarms[self.currentalarm]
         folder = re.search("alarm\d+", self.alarmfolders[self.currentalarm]).group(0)
         alarm.save_playfile(tmpPlayfile, folder, True, self.plugins)
-        os.system(wakeup_script + " $USER test &")
+        os.system(wakeup_script + " $USER " + re.search("\d+",folder).group(0) + " test &")
     '''Callback for clicking Help in main window'''
     def help_clicked (self, widget, data=None):
         if widget.get_label() == "gtk-about":
@@ -410,7 +410,7 @@ class Wakeup:
     def on_plugins_cancel_clicked (self, widget, data=None):
         # Restore the backup of previously active plugins and remake plugin list
         self.plugin_window.hide()
-        return True
+        return False
 
     '''Callback for clicking Ok in plugins window'''
     def on_plugins_ok_clicked (self, widget, data=None):
@@ -454,6 +454,16 @@ class Wakeup:
                     activeplugins.append(name)
                 item = self.treemodel2.iter_next(item)
         alarm.set_property("activeplugins", activeplugins)
+        if "Commands" in activeplugins:
+            alarmfolder = self.alarmfolders[self.currentalarm]
+            command_pref_file = os.path.join(alarmfolder, 'plugins/Commands/Commands.config')
+            c_pref_file = open(command_pref_file, "r")
+            self.lines = ''.join(c_pref_file.readlines())
+            c_pref_file.close()
+            old_items = re.search("dataitems=(.*)", self.lines).group(1).split(",")
+            if old_items == ['']:
+                old_items = []
+            alarm.set_property("Commands_dataitems", old_items)
         myiter = self.alarmlist.get_iter_from_string(str(self.currentalarm))
         self.change_alarmlist_item(alarm, myiter)
         self.on_alarm_selected(None)
@@ -483,12 +493,14 @@ class Wakeup:
             pluginfolder = os.path.join(self.alarmfolders[self.currentalarm], "plugins", plugin)
             exec("pluginPref = " + plugin + "." + plugin + "('" + pluginfolder + "')")
             pluginPref.window.set_modal(True)
-            pluginPref.window.set_transient_for(self.plugin_window)
+            # This next line actually makes it impossible to close plugin preferences more than once
+            #pluginPref.window.set_transient_for(self.plugin_window)
             # TODO: This doesn't seem to work at the moment, so all plugin
             # glade files have the hint set to dialog individually.
             # pluginPref.window.set_type_hint(gtk.gdk.WINDOW_TYPE_HINT_DIALOG)
             pluginPref.main()
             self.prefsOpen = False
+        return False
 
     '''Callback for toggling availability of a plugin by checking a box'''
     def on_plugin_toggled (self, widget, data=None):
@@ -691,6 +703,7 @@ class Wakeup:
         del self.alarmlist[pos]
         del self.alarms[pos]
         del self.alarmfolders[pos]
+
     '''Callback for selecting an alarm from the list'''
     def on_alarm_selected(self, widget, data=None):
         model, paths = self.alarm_selection.get_selected_rows()
@@ -718,6 +731,10 @@ class Wakeup:
             if pluginname in alarm.get_property("activeplugins"):
                 for item in self.plugins[pluginname]['data_items']:
                     self.add_data_item("$" + item)
+        # Add in dynamic dataitems from Command plugin
+        if "Commands" in alarm.get_property("activeplugins"):
+            for item in alarm.get_property("Commands_dataitems"):
+                self.add_data_item("$" + item)
 
     def on_introdialog_destroy(self, widget, data=None):
         self.introdialog.hide()

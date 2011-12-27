@@ -1,12 +1,26 @@
-wakeup (1.1-0ubuntu1) oneiric; urgency=low
+wakeup (1.2-0ubuntu1) oneiric; urgency=low
 
-  * Fixed lack of time zone in hebcalevents location auto-detect
-  * Fixed schedule not outputting "Nothing listed" when no events
-  * Fixed reading only first item on schedule.
-  * Fixed mix-up of schedule and todo depending on which is called first.
-  * Added reading of event location.
-  * Removed hard-coding of New Jersey in determing metar ID by IP
-  * Fixed inability to set volume when previously muted by user
+  * New upstream release
+   - Changed weather source to google using python-pywapi
+   - Added location.py in wakeup directory as plugin helper
+   - Added plugin "Commands" which allows arbitrary user dataitems
+   - Changed HebrewCalendar to use location from location.py
+   - fixed problems to do with hard-coded DISPLAY variable
+   - Small bug fixes
+  * Removed all perl dependencies
+
+ -- David Glass <dsglass@gmail.com>  Tue, 27 Dec 2011 15:36:14 -0800
+
+wakeup (1.1-0ubuntu1) precise; urgency=low
+
+  * New upstream release (LP: #876649).
+   - Fixed lack of time zone in hebcalevents location auto-detect
+   - Fixed schedule not outputting "Nothing listed" when no events
+   - Fixed reading only first item on schedule.
+   - Fixed mix-up of schedule and todo depending on which is called first.
+   - Added reading of event location.
+   - Removed hard-coding of New Jersey in determing metar ID by IP
+   - Fixed inability to set volume when previously muted by user
 
  -- David Glass <dsglass@gmail.com>  Wed, 09 Nov 2011 22:26:14 -0800
 

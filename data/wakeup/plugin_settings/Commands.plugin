@@ -1,0 +1,23 @@
+(dp0
+S'description'
+p1
+S'Run arbitrary command'
+p2
+sS'script'
+p3
+S'Commands/run_commands.sh'
+p4
+sS'text_output'
+p5
+I01
+sS'data_items'
+p6
+(lp7
+sS'has_preferences'
+p8
+I01
+sS'name'
+p9
+S'Commands'
+p10
+s.

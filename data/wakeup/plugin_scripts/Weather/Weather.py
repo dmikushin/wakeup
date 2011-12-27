@@ -47,9 +47,9 @@ class Weather:
             self.location = manual_id
             threading.Thread.__init__(self)
         def run(self):
-            ip_script = '/usr/share/wakeup/plugin_scripts/Weather/id_by_ip.sh'
-            ip_process = subprocess.Popen(ip_script, stdout=subprocess.PIPE)
-            self.location.set_text(ip_process.communicate()[0][:-1])
+            import location
+            loc = location.get_location()
+            self.location.set_text(loc['city']+','+loc['state']+','+loc['country'])
 
 
     '''On Checking to set weather ID manually'''

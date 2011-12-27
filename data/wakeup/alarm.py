@@ -25,6 +25,7 @@ class alarm:
         self.otherspeechtool = "none"
         self.wakecomputer = True
         self.activeplugins = list()
+        self.Commands_dataitems = list() # for dynamic dataitems from Commands plugin
             
     def set_property(self, property_name, value):
         exec("self." + property_name + " = value")
@@ -40,6 +41,12 @@ class alarm:
             data_items.extend(plugins[key]['data_items'])
             for item in plugins[key]['data_items']:
                 itemsToPlugin[item] = key
+        # Add in dynamic dataitems from Commands plugin
+        if "Commands" in self.activeplugins:
+            data_items.extend(self.Commands_dataitems)
+            for item in self.Commands_dataitems:
+                itemsToPlugin[item] = "Commands"
+
         usedDataByPlugin = dict()
         for name in self.activeplugins:
             usedDataByPlugin[name] = list()            
@@ -63,6 +70,9 @@ class alarm:
             for j in data_used:
                 if j in data_items and itemsToPlugin[j] in self.activeplugins:
                     usedDataByPlugin[itemsToPlugin[j]].append(j)
+                else:
+                    i = re.sub('\$'+j,'\\\$'+j,i)
+                    del data_used[data_used.index(j)]
             for name in usedDataByPlugin.keys():
                 if plugins[name]['text_output'] and not len(usedDataByPlugin[name]) == 0:
                     itemsstring = "".join([k + " " for k in usedDataByPlugin[name]])
@@ -150,7 +160,7 @@ class alarm:
                     + alarmnum + ".*$/d\" $tmpfile\n" \
                     + "echo \"" + str(minute) + " " + str(hour) + " " \
                     + str(dom) + " " + str(mon) + " " + str(dow) + " " \
-                    + "DISPLAY=:0 " + wakeup_script + " $USER " \
+                    + wakeup_script + " $USER " \
                     + alarmnum + " >/dev/null 2>&1\" >> $tmpfile\n" \
                     + "crontab $tmpfile\n" \
                     + "rm $tmpfile"

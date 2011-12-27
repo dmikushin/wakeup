@@ -9,7 +9,7 @@ Homepage: https://launchpad.net/wakeup
 
 Package: wakeup
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, weather-util, python-evolution, python-dateutil, python-vobject, python-feedparser, python-glade2, festival, perl, curl, gksu, shell-fm, mpg123
+Depends: ${misc:Depends}, ${python:Depends}, weather-util, python-evolution, python-dateutil, python-vobject, python-feedparser, python-glade2, festival, curl, gksu, shell-fm, mpg123, python-pywapi
 Suggests: hebcal
 Description: Fully customizable and extensible talking alarm clock
  This package has a complete graphical front end with which a user can set an

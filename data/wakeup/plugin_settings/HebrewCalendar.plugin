@@ -5,7 +5,7 @@ S'Get date and events from the Hebrew calendar'
 p2
 sS'script'
 p3
-S'HebrewCalendar/check_hebcal.sh'
+S'HebrewCalendar/check_hebcal.py'
 p4
 sS'text_output'
 p5

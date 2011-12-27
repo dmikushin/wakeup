@@ -49,11 +49,10 @@ class HebrewCalendar:
             self.window = parent
             threading.Thread.__init__(self)
         def run(self):
-            self.window.LonLat = commands.getoutput('wget -q -U DummyBrowser/1.0 -O - www.ip-adress.com/ip_tracer | grep GLatLng | grep -oP "[0-9\.\-, ]{2,}"')
-            lon = re.search("^[0-9\.\-]+", self.window.LonLat).group(0)
-            lat = re.search("[0-9\.\-]+$", self.window.LonLat).group(0)
-            self.window.longitude.set_text(lon)
-            self.window.latitude.set_text(lat)
+            import location
+            loc = location.get_location()
+            self.window.longitude.set_text(loc['longitude'])
+            self.window.latitude.set_text(loc['latitude'])
 
 
     '''On Checking to set weather ID manually'''
