@@ -1,6 +1,6 @@
 #!/bin/bash
 # Runs a given alarm set by wakeup-settings for a given user.
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 # initialize environment variables
@@ -19,9 +19,11 @@ eval `eval "$dosudo dbus-launch --sh-syntax"`
 
 # set volume
 # see http://ubuntuforums.org/showthread.php?t=1796713
-volume=$(grep -A 2 "volume" $home/.wakeup/alarm$2/wakeup_settings | grep "F" | sed 's/F//')
-/usr/bin/amixer set Master $volume% unmute
-/usr/bin/amixer set Master $volume% unmute
+volume=$(grep -A 2 "volume" $home/.wakeup/alarm$2/wakeup_settings | awk "NR==3" | grep -oP "[0-9\.]+")
+if [[ $volume == "" ]]; then
+    volume=50
+fi
+/usr/bin/amixer set Master playback $volume% unmute
 /usr/bin/amixer set Headphone unmute
 /usr/bin/amixer set Speaker unmute
 /usr/bin/amixer set PCM 100% unmute
@@ -41,6 +43,9 @@ function stop
     kill ${y[@]} &
     exit 0
 }
+
+
+trap "stop; exit" SIGHUP SIGINT SIGTERM
 
 # allow the user to end it all
 while [ ! ]; do

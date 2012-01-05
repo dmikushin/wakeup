@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # get weather for Weather
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import re
@@ -38,7 +38,7 @@ for out in sys.argv[2:len(sys.argv)]:
     if (out == "skyconditions"):
         print weather['current_conditions']['condition'] + '\n'
     if (out == "humidity"):
-        print weather['current_conditions']['humidity'] + '\n'
+        print re.sub("Humidity: ", "", weather['current_conditions']['humidity']) + '\n'
     if (out == "windconditions"):
         winds =   weather['current_conditions']['wind_condition']
         magnitude = re.search("at (.*) mph", winds).group(1)

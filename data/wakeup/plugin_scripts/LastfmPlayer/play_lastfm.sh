@@ -1,7 +1,9 @@
 #!/bin/bash
 # plugin script for LastfmPlayer, a wrapper for shell-fm
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
+
+trap "killall shell-fm; exit" SIGHUP SIGINT SIGTERM
 
 export HOME=/home/$1
 plugin_file=~/.shell-fm/shell-fm.rc

@@ -1,15 +1,21 @@
-wakeup (1.2-0ubuntu1) oneiric; urgency=low
+wakeup (1.2-0ubuntu1) precise; urgency=low
 
-  * New upstream release
+  * New upstream release (LP: #909189).
    - Changed weather source to google using python-pywapi
    - Added location.py in wakeup directory as plugin helper
    - Added plugin "Commands" which allows arbitrary user dataitems
    - Changed HebrewCalendar to use location from location.py
    - fixed problems to do with hard-coded DISPLAY variable
-   - Small bug fixes
-  * Removed all perl dependencies
+   - fixed issues with stopping the alarm
+   - removed calls to os.system and commands.get(status)output
+   - small bug fixes
+  * Updated packaging
+   - Removed all perl dependencies
+   - wrap-and-sort debian/
+   - converted copyright to dep5 format
+   - use dh_python2 instead of pysupport
 
- -- David Glass <dsglass@gmail.com>  Tue, 27 Dec 2011 15:36:14 -0800
+ -- David Glass <dsglass@gmail.com>  Thu, 05 Jan 2012 16:59:18 -0500
 
 wakeup (1.1-0ubuntu1) precise; urgency=low
 

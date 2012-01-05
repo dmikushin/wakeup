@@ -3,7 +3,7 @@
 # future or recurrently for some general cron-formatted times. The computer is
 # actually woken up 5 minutes earlier than specified, and a given script is set
 # to run at the exact time given via crontab. This script must be run as root.
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 # For only print next wakeup time

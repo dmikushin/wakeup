@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Runs the GUI for user to set alarms and their preferences.
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
@@ -11,7 +11,7 @@ from pango import SCALE
 import os
 import re
 import sys
-from commands import getstatusoutput, getoutput
+from commands import getstatusoutput
 import copy
 import pickle
 import threading
@@ -206,7 +206,7 @@ class Wakeup:
                 defaultpluginfolder = os.path.join(defaultpluginsfolder, folder)
                 pluginfolder = os.path.join(pluginsfolder, folder)
                 if os.path.isdir(defaultpluginfolder) and not os.path.exists(pluginfolder):
-                    os.system("cp -R " + defaultpluginfolder + " " + pluginfolder)
+                    subprocess.call(["cp", "-R", defaultpluginfolder, pluginfolder])
             '''Setup the GUI alarm list'''
             myiter = self.alarmlist.get_iter_first()
             self.change_alarmlist_item(self.alarms[-1], myiter)
@@ -272,7 +272,7 @@ class Wakeup:
     def cancel_clicked (self, widget, data=None):
         for i in range(0, len(self.alarmsjustcreated)):
             if self.alarmsjustcreated[i]:
-                os.system("rm -R " + self.alarmfolders[i])
+                subprocess.call(["rm", "-R", self.alarmfolders[i]])
         self.on_window_destroy(self, widget)
 
     '''Callback for clicking Apply in main window'''
@@ -283,7 +283,7 @@ class Wakeup:
         for i in range(0, len(self.alarms)):
             if not os.path.exists(self.alarmfolders[i]):
                 os.mkdir(self.alarmfolders[i])
-                os.system("cp -R " + defaultpluginsfolder + " " + os.path.join(self.alarmfolders[i], "plugins"))
+                subprocess.call(["cp", "-R", defaultpluginsfolder, os.path.join(self.alarmfolders[i], "plugins")])
             folder = re.search("alarm\d+", self.alarmfolders[i]).group(0)
             self.alarms[i].save_playfile(os.path.join(self.alarmfolders[i], "playable_text"), folder,
                                          False, self.plugins)
@@ -291,7 +291,7 @@ class Wakeup:
         # delete removed alarms
         for folder in self.oldalarmfolders:
             if not folder in self.alarmfolders:
-                os.system("rm -r " + folder)
+                subprocess.call(["rm", "-r", folder])
         hadbootalarms = False
         for alarm in self.oldalarms:
             if alarm.get_property("wakecomputer") == True:
@@ -299,8 +299,7 @@ class Wakeup:
             else:
                 alarmfolder = self.oldalarmfolders[self.oldalarms.index(alarm)]
                 foldernumber = re.search("\d+", alarmfolder).group(0)
-                command = alarm.get_remove_command(self.oldalarmfolders[self.oldalarms.index(alarm)], wakeup_script)
-                os.system(command)
+                alarm.remove_command(self.oldalarmfolders[self.oldalarms.index(alarm)], wakeup_script)
         # Set the alarms and remove removed boot alarms
         hasbootalarms = False
         success = True
@@ -308,22 +307,21 @@ class Wakeup:
         for alarm in self.alarms:
             if not alarm.get_property("wakecomputer"):
                 folder = self.alarmfolders[self.alarms.index(alarm)]
-                command = alarm.get_setalarm_command(folder, setalarm_script, wakeup_script)
-                [status, output] = getstatusoutput(command)
-                if output != "":
-                    success = False
+                [success, out] = alarm.setalarm_command(folder, setalarm_script, wakeup_script)
+                success = (success == 0)
             else:
                 hasbootalarms = True
         if hasbootalarms or hadbootalarms: #note also removes removed boot alarms.
-            [status, output] = getstatusoutput('gksudo --message ' + \
-            '"Root privaleges are necessary to set and remove alarms that wake your computer" ' + \
-            setnextalarmscript + " $USER")
-            if status != 0:
-                success = False
-                outscript += output
-            else:
+            output = ""
+            try:
+                output = subprocess.check_output(['gksudo', '--message', 
+                    'Root privileges are necessary to set and remove alarms that wake your computer',
+                    setnextalarmscript, os.environ['USER']])
                 if not len(self.alarms) == 0 and not output == "":
                     outscript += "Next computer wakeup at: " + output
+            except subprocess.CalledProcessError:
+                success = False
+                outscript += output
         if success == False:
             outscript = "Unable to set all alarms. Check time preferences.\n" + outscript 
         else:
@@ -345,7 +343,7 @@ class Wakeup:
         alarm = self.alarms[self.currentalarm]
         folder = re.search("alarm\d+", self.alarmfolders[self.currentalarm]).group(0)
         alarm.save_playfile(tmpPlayfile, folder, True, self.plugins)
-        os.system(wakeup_script + " $USER " + re.search("\d+",folder).group(0) + " test &")
+        subprocess.call([wakeup_script, os.environ['USER'], re.search("\d+",folder).group(0), "test", "&"])
     '''Callback for clicking Help in main window'''
     def help_clicked (self, widget, data=None):
         if widget.get_label() == "gtk-about":
@@ -645,7 +643,7 @@ class Wakeup:
         self.alarmsjustcreated.append(not os.path.exists(self.alarmfolders[-1]))
         if self.alarmsjustcreated[-1]:
             os.mkdir(self.alarmfolders[-1])
-            os.system("cp -R " + defaultpluginsfolder + " " + os.path.join(self.alarmfolders[-1], "plugins"))
+            subprocess.call(["cp", "-R", defaultpluginsfolder, os.path.join(self.alarmfolders[-1], "plugins")])
     '''Update alarm list entry'''
     def change_alarmlist_item(self, alarm, treeiter):
         text = re.sub("\s+", " ", alarm.get_property("text"))
@@ -680,7 +678,7 @@ class Wakeup:
     def remove_alarm(self, widget, data=None):
         pos = int(self.currentalarm)
         if self.alarmsjustcreated[pos]:
-            os.system("rm -R " + self.alarmfolders[pos])
+            subprocess.call(["rm", "-R", self.alarmfolders[pos]])
         del self.alarmsjustcreated[pos]
         position_selected = self.alarmlist.get_iter_from_string(str(pos))
         if pos != 0:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # get location for Weather
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 # Note this function can be imported, and gives a dictionary output of location data

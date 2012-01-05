@@ -1,7 +1,9 @@
 #!/bin/bash
 # plugin script for MusicPlayer, which plays a given file with mpg123
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
+
+trap "killall mpg123; exit" SIGHUP SIGINT SIGTERM
 
 plugin_file=/home/$1/.wakeup/$ALARM/plugins/MusicPlayer/MusicPlayer.config
 MUSIC=$(sed -rn 's/music_file\s*=\s*(.*)\s*$/\1/p' $plugin_file)

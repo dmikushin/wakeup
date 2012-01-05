@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # alarm data type class used by wakeup-settings and setnextalarm.
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
-import datetime, re, os, pickle
+import datetime, re, os, pickle, subprocess
 days_dict = dict(Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6)
 
 class alarm:
@@ -104,7 +104,7 @@ class alarm:
                      + " do echo -n ''; done\n\n")
         file.write(final_text)
         file.close()
-        os.system("chmod +x " + filename)
+        subprocess.call(["chmod", "+x", filename])
         
     def save_settings(self, filename):
         cronval = ""
@@ -136,49 +136,64 @@ class alarm:
         except: return "wakeup_settings file not found or improperly formatted"
         return "Loaded wakeup settings"
         
-    def get_setalarm_command(self, folder, setalarm_script, wakeup_script):
+    def setalarm_command(self, folder, setalarm_script, wakeup_script):
         [minute, hour, dom, mon, dow] = self.get_cronvalues()
-        # workaround for minute spinbutton having only 1 digit for minutes < 10
-        if minute < 10:
-            minute = "0" + str(minute)
         alarmnum = re.search("alarm(\d+)$", folder).group(1)
         wakeup_script_meta = re.sub("/", "\\/", wakeup_script)
         if self.wakecomputer:
             if self.recurrs == False:
+                # workaround for minute spinbutton having only 1 digit for minutes < 10
+                if minute < 10:
+                    minute = "0" + str(minute)
                 command = setalarm_script + " " + str(hour) +  ":" \
-                        + str(minute) + " " + wakeup_script + " $USER"
+                        + str(minute) + " " + wakeup_script + " " + os.environ['USER'] + " " + alarmnum
             else:
-                command = setalarm_script + ' -c "' + str(minute) + '" "' \
-                        + str(hour) + '" "' + str(dom) + '" "' + str(mon) \
-                        + '" "' + str(dow) + '" ' + wakeup_script + " $USER"
-            command = 'gksudo --message \"root privaleges are necessary to '\
-                    + 'set the alarm\" \"' + command + "\""
+                # Note, because shell=False in check_output, do not need to quote asterisks
+                command = setalarm_script + ' -c ' + str(minute) + ' ' \
+                        + str(hour) + ' ' + str(dom) + ' ' + str(mon) \
+                        + ' ' + str(dow) + ' ' + wakeup_script + " " + os.environ['USER'] + " " + alarmnum
+            pre = ['gksudo', '--message', 'Root privileges are necessary to set and remove alarms that wake your computer']
+            command = pre + [command]
+            try:
+                out = subprocess.check_output(command)
+                return [0, out]
+            except subprocess.CalledProcessError:
+                return [1, ""]
         else:
-            command = "tmpfile=/tmp/wakeup_tmp.txt\n" \
-                    + "crontab -l > $tmpfile\n" \
-                    + "sed -i \"/^.*" + wakeup_script_meta + " $USER " \
-                    + alarmnum + ".*$/d\" $tmpfile\n" \
-                    + "echo \"" + str(minute) + " " + str(hour) + " " \
-                    + str(dom) + " " + str(mon) + " " + str(dow) + " " \
-                    + wakeup_script + " $USER " \
-                    + alarmnum + " >/dev/null 2>&1\" >> $tmpfile\n" \
-                    + "crontab $tmpfile\n" \
-                    + "rm $tmpfile"
-        return command
+            tmpfile = "/tmp/wakeup_tmp.txt"
+            f = open(tmpfile,'w')
+            subprocess.call(['crontab', '-l'], stdout=f)
+            subprocess.call(['sed', '-i', "/^.*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
+                    + alarmnum + ".*$/d", tmpfile])
+            f.close()
+            f = open(tmpfile,'a')
+            f.write(str(minute) + " " + str(hour) + " " + str(dom) + " " + str(mon) + " " + str(dow))
+            f.write(" " + wakeup_script + " " + os.environ['USER'] + " " + alarmnum + " >/dev/null 2>&1\n")
+            f.close()
+            subprocess.call(['crontab', tmpfile])
+            subprocess.call(['rm', tmpfile])
+            return [0,""]
 
-    def get_remove_command(self, folder, wakeup_script):
+    def remove_command(self, folder, wakeup_script):
         alarmnum = re.search("alarm(\d+)$", folder).group(1)
         wakeup_script_meta = re.sub("/", "\\/", wakeup_script)
-        sudo = ""
+        sudo = []
         if self.wakecomputer:
-            sudo = "sudo"
-        command = "tmpfile=/tmp/wakeup_tmp.txt\n" \
-                + sudo + " crontab -l > $tmpfile\n" \
-                + "sed -i \"/^.*" + wakeup_script_meta + " $USER " \
-                + alarmnum + ".*$/d\" $tmpfile\n" \
-                + sudo + " crontab $tmpfile\n" \
-                + "rm $tmpfile"
-        return command
+            sudo = ['gksudo', '--message', 'Root privileges are necessary to set and remove alarms that wake your computer']
+        tmpfile = "/tmp/wakeup_tmp.txt"
+        f = open(tmpfile, 'w')
+        if sudo != []:
+            subprocess.call(sudo + ['crontab -l'], stdout=f)
+        else:
+            subprocess.call(['crontab', '-l'], stdout=f)
+        f.close()
+        subprocess.call(['sed', '-i', "/^.*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
+                        + alarmnum + ".*$/d", tmpfile])
+        if sudo != []:
+            subprocess.call(sudo + ['crontab ' + tmpfile])
+        else:
+            subprocess.call(['crontab', tmpfile])
+        subprocess.call(['rm', tmpfile])
 
     def get_cronvalues(self):
         if self.recurrence == "Cron":

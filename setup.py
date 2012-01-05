@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 from distutils.core import setup
@@ -20,7 +20,7 @@ for root, dirs, files in os.walk('data/wakeup'):
 
 
 setup(name='wakeup',
-      version='1.0.0',
+      version='1.2',
       description='Fully customizable and extensible talking alarm clock',
       author='David Glass',
       author_email='dsglass@gmail.com',

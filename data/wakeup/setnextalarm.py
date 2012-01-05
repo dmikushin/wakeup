@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Using setalarm, finds the earliest alarm in the future which requires
 # a computer wakeup and sets the computer to wake up and run that alarm. 
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import sys
@@ -11,7 +11,7 @@ wakeup_script = "/usr/bin/wakeup"
 wakeup_folder = "/usr/share/wakeup/"
 sys.path.append(wakeup_folder)
 from alarm import alarm
-from commands import getstatusoutput
+import subprocess
 
 thisscript = os.path.join(wakeup_folder, "setnextalarm.py") + " " + sys.argv[1]
 setalarm_script = "/usr/bin/setalarm"
@@ -37,52 +37,59 @@ crontimes = list()
 for alarm in alarms:
     cronstring = alarm.get_property("cronvalue")
     cronstring = re.sub("\*", '"*"', cronstring)
-    [status, output] = getstatusoutput(setalarm_script + " -p -c " + \
-                                       cronstring + " -o 0")
-    if status == 0:
+    crontimes.append(re.sub('"', '', cronstring))
+    try:
+        output = subprocess.check_output([setalarm_script, '-p', '-c'] + re.split(' ', cronstring) +  ['-o', '0'])
         alarmtimes.append(output)
-        crontimes.append(re.sub('"', '', cronstring))
-    elif output == "The specified cron time does not occur within a year":
-        del alarms[alarms.index(alarm)]
-    else:
-        print "Unable to set alarms. Some crontimes are invalid."
-        exit(1)
+    except subprocess.CalledProcessError:
+        if output == "The specified cron time does not occur within a year":
+            del alarms[alarms.index(alarm)]
+        else:
+            print "Unable to set alarms. Some crontimes are invalid."
+            exit(1)
 
 # If no alarms in list, clear root's cron file and unset computer wakeup
 if len(alarms) == 0:
-    [status1, output] = getstatusoutput('tmpfile=/tmp/setnextalarm_tmp.txt\n' + \
-                    'sudo crontab -l > $tmpfile\n' + \
-                    'sed -i /^.*setnextalarm.*$/d $tmpfile\n' + \
-                    'sudo crontab $tmpfile\n' + \
-                    'rm $tmpfile')
-    [status2, output] = getstatusoutput('sudo ' + setalarm_script + ' -u 0')
+    tmpfile = '/tmp/setnextalarm_tmp.txt'
+    f = open(tmpfile, 'w')
+    subprocess.call(['sudo', 'crontab', '-l'], stdout=f)
+    f.close()
+    subprocess.call(['sed', '-i', '/^.*setnextalarm.*$/d', tmpfile])
+    subprocess.call(['sudo', 'crontab', tmpfile])
+    subprocess.call(['rm', tmpfile])
+    subprocess.call(['sudo', setalarm_script, '-d'])
     exit()
 
 minalarm = min(alarmtimes)
 minindex = alarmtimes.index(minalarm)
 mincron = crontimes[minindex]
 # make sure the wakeup is preserved through shutdowns and at alarm times. Set alarms.
-command = 'tmpfile=/tmp/setnextalarm_tmp.txt\n' + \
-          'sudo crontab -l > $tmpfile\n' + \
-          'sed -i /^.*setnextalarm.*$/d $tmpfile\n' + \
-          'echo \'' + mincron + ' ' + thisscript + \
-          ' >/dev/null 2>&1\' >> $tmpfile\n' + \
-          'echo \'@reboot ' + thisscript + \
-          ' >/dev/null 2>&1\' >> $tmpfile\n'
+tmpfile = '/tmp/setnextalarm_tmp.txt'
+f = open(tmpfile, 'w')
+subprocess.call(['sudo', 'crontab', '-l'], stdout=f)
+subprocess.call(['sed', '-i', '/^.*setnextalarm.*$/d', tmpfile])
+f.close()
+f = open(tmpfile, 'a')
+f.write(mincron + ' ' + thisscript +  ' >/dev/null 2>&1\n')
+f.write('@reboot ' + thisscript + ' >/dev/null 2>&1\n')
 for i in range(0, len(alarmtimes)):
     if alarmtimes[i] == minalarm:
         alarmnum = re.search("\d+$", alarmfolders[i]).group(0)
-        command += 'echo \'' + mincron + ' ' + \
-                   wakeup_script + " " + sys.argv[1] + " " + alarmnum + \
-                   ' >/dev/null 2>&1 #entered by setnextalarm\' >> $tmpfile\n'
-command += 'sudo crontab $tmpfile\n' + \
-           'rm $tmpfile'
-[status1, output] = getstatusoutput(command)
-# set the computer to wake at the earliest of the wakeup times
-[status2, output] = getstatusoutput('sudo ' + setalarm_script + ' -u ' + minalarm)
-if status1 == 0 and status2 == 0:
-    [status, output] = getstatusoutput('date -d @' + minalarm)
+        f.write(mincron + ' ' + wakeup_script + ' ' + sys.argv[1] + ' ' + alarmnum + \
+                ' >/dev/null 2>&1 #entered by setnextalarm\n')
+f.close()
+subprocess.call(['sudo', 'crontab', tmpfile])
+subprocess.call(['rm', tmpfile])
+success = True
+try:
+    subprocess.check_output(['sudo', setalarm_script, '-u', minalarm])
+except subprocess.CalledProcessError:
+    success = False
+try:
+    output = subprocess.check_output(['date', '-d', '@' + minalarm])
     print output
-else:
+except subprocess.CalledProcessError:
+    success = False
+if not success:
     print "Unable to set alarms. Check alarm time preferences."
     exit(1)

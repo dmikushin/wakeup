@@ -1,7 +1,7 @@
 #!/bin/bash
 # Output a list of "voicename\ndescription" for each voice available to
 # festival. Uses voice name as description if no description found.
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 out1=/tmp/voice_out1

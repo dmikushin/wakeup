@@ -1,6 +1,6 @@
 #!/bin/bash
 # plugin script for DateTime outputting current date and/or time
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 plugin_file=/home/$1/.wakeup/$ALARM/plugins/DateTime/DateTime.config

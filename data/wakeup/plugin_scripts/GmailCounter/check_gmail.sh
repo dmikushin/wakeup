@@ -1,6 +1,6 @@
 #!/bin/bash
 # plugin script for GmailCounter outputting number of new emails on a gmail account.
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 eval $(cat /home/$1/.wakeup/$ALARM/plugins/GmailCounter/GmailCounter.config);

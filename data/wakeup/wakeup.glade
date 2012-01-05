@@ -313,7 +313,7 @@ Each alarm's settings are completely independent. Click "Edit multiple alarms...
                 <property name="ypad">1</property>
                 <property name="label" translatable="yes">&lt;big&gt;&lt;big&gt;&lt;big&gt;&lt;b&gt;Wakeup 1.2&lt;/b&gt;&lt;/big&gt;&lt;/big&gt;&lt;/big&gt;
 
-Copyright (c) David Glass 2011
+Copyright (c) David Glass 2012
 &amp;lt;dsglass@gmail.com&amp;gt;
 
 Copyright is GPLv3 or later

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # plugin script for EvolutionData outputting schedule and/or tasks
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import evolution, urllib, vobject, datetime, dateutil
@@ -47,13 +47,19 @@ for cal in calendars:
             parsedEvent = ev
         start = parsedEvent.dtstart.value
         if hasattr(parsedEvent, "rrule"):
-            rrule = parsedEvent.rrule.value
-            recurrences = dateutil.rrule.rrulestr(rrule, dtstart=start)
-            for day in recurrences:
-                if day.date() == today:
-                    todays_events.append(parsedEvent)
-                if day.date() > today:
-                    break
+            try:
+                rrule = parsedEvent.rrule.value
+                rrule_until = re.search("UNTIL=[A-Za-z0-9]+",rrule)
+                if rrule_until and rrule_until.group(0)[-1] == "Z": # some weird dateutil error in time zones
+                    rrule = re.sub(rrule_until.group(0), rrule_until.group(0)[:-1], rrule)
+                recurrences = dateutil.rrule.rrulestr(rrule, dtstart=start)
+                for day in recurrences:
+                    if day.date() == today:
+                        todays_events.append(parsedEvent)
+                    if day.date() > today:
+                        break
+            except TypeError:
+                pass # some weird dateutil error in time zones, just in case it's still missed
         elif type(start) == datetime.date and start == today:
             d=parsedEvent.dtstart.value
             parsedEvent.dtstart.value = datetime.datetime.combine(d, datetime.time(0,0,0,0))
@@ -67,7 +73,7 @@ for cal in calendars:
         continue
     for td in todos.get_all_objects():
         parsedTd = vobject.readOne(td.get_as_string())
-        if hasattr(parsedTd, "percent_complete") and parsedTd.percent_complete != "100":
+        if not (hasattr(parsedTd, "percent_complete") and parsedTd.percent_complete == "100"):
             todo_list.append(parsedTd)
 
 for out in to_output:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # plugin GUI preferences class for Hebrew Calendar
-# Copyright (C) 2011 David Glass <dsglass@gmail.com>
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import pygtk
@@ -70,12 +70,6 @@ class HebrewCalendar:
             lon=""
             lat=""
             manual_location = "false"
-        #self.lines = re.sub("longitude\s*=\s*.*\s*", "longitude=" \
-        #    + lon + "\n", self.lines)
-        #self.lines = re.sub("latitude\s*=\s*.*\s*", "latitude=" \
-        #    + lat + "\n", self.lines)
-        #self.lines = re.sub("manual_location\s*=\s*.*\s*", "manual_location=" \
-        #    + manual_location + "\n", self.lines)
         hc_file = open(self.plugin_file, "w")
         hc_file.write("longitude=" + lon + "\n")
         hc_file.write("latitude=" + lat + "\n")
