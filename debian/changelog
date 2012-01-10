@@ -8,7 +8,7 @@ wakeup (1.2-0ubuntu1) precise; urgency=low
    - fixed problems to do with hard-coded DISPLAY variable
    - fixed issues with stopping the alarm
    - removed calls to os.system and commands.get(status)output
-   - use secure temp files (LP: 912762)
+   - use secure temp files (LP: #912762)
    - root-owned chmod 700 playable_text file for boot alarms
    - small bug fixes
   * Updated packaging
