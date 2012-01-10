@@ -16,7 +16,6 @@ wakeup (1.2-0ubuntu1) precise; urgency=low
    - wrap-and-sort debian/
    - converted copyright to dep5 format
    - use dh_python2 instead of pysupport
-  * 
 
  -- David Glass <dsglass@gmail.com>  Tue, 10 Jan 2012 01:46:14 -0800
 
