@@ -21,7 +21,7 @@ if [[ ! $only_print ]]; then
     # Clear the system wakeup alarm.
     echo 0 > /sys/class/rtc/rtc0/wakealarm;
     # Make copy of crontab, delete old alarms
-    tmpfile=/tmp/setalarm_tmp.txt
+    tmpfile=$(mktemp)
     crontab -l > $tmpfile
     sed -i /^.*setalarm.*$/d $tmpfile
 

@@ -6,7 +6,7 @@
 eval $(cat /home/$1/.wakeup/$ALARM/plugins/GmailCounter/GmailCounter.config);
 password=$(echo $password | base64 -d)
 
-tmpfile=/tmp/gmailcheck_tmp
+tmpfile=$(mktemp)
 curl -u $username:$password --silent "https://mail.google.com/mail/feed/atom" \
 		| grep -P "<issued>.*" | sed -r 's/(.*)T24:(.*)/\1T0:\2/' \
 		| sed -r 's/<issued>(.*)T(.*)Z<\/issued>/date +%s --date "\1 \2"/' > $tmpfile

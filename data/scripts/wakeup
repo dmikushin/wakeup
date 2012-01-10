@@ -64,7 +64,7 @@ while [ ! ]; do
                 /usr/bin/setalarm -u $(date -d "+$snooze min" "+%s") $offset
                 dosudo="sudo"
             fi
-            tmpfile=/tmp/wake
+            tmpfile=$(mktemp)
             eval "$dosudo crontab -l >$tmpfile"
             snoozetime=$(date -d "+$snooze min" "+%M %H %d %m %w")
             echo "$snoozetime /usr/bin/wakeup $1 $2 >/dev/null 2>&1"\

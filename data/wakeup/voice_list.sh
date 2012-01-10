@@ -4,9 +4,9 @@
 # Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
-out1=/tmp/voice_out1
-out2=/tmp/voice_out2
-out3=/tmp/voice_out3
+out1=$(mktemp)
+out2=$(mktemp)
+out3=$(mktemp)
 echo "" > $out1; echo "" > $out2; echo "" > $out3
 festival --server >/dev/null 2>&1 &
 

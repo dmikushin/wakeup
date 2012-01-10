@@ -3,7 +3,7 @@
 # Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
-import datetime, re, os, pickle, subprocess
+import datetime, re, os, pickle, subprocess, tempfile
 days_dict = dict(Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6)
 
 class alarm:
@@ -90,21 +90,35 @@ class alarm:
             final_text += "\n" + init_string
             if has_text_output or len(data_used) == 0:\
                 final_text += "echo -e \"" + i + "\" | talk\n"
-        file = open(filename, "w")
-        file.write("#!/bin/bash\nusr=$1\n")
-        file.write("export ALARM=" + folder + "\nIFS=$'\\n\\n'\nshopt -s expand_aliases\n")
+
+        top_text = "#!/bin/bash\nusr=$1\n" \
+                 + "export ALARM=" + folder + "\nIFS=$'\\n\\n'\nshopt -s expand_aliases\n"
         if not self.otherspeechtool == "none":
-            file.write("alias talk='" + self.otherspeechtool + "'\n\n")
+            top_text = top_text + "alias talk='" + self.otherspeechtool + "'\n\n"
         else:
-            file.write("alias talk='festival_client --ttw | aplay'\n")
-            file.write("festival --server ")
+            top_text = top_text + "alias talk='festival_client --ttw | aplay'\n" \
+                     + "festival --server "
             if self.voice != "none":
-                file.write("'(voice_" + self.voice + ")'")
-            file.write("&\nwhile [[ $(echo '()' | festival_client && echo $?) != 0 ]];" \
-                     + " do echo -n ''; done\n\n")
-        file.write(final_text)
-        file.close()
-        subprocess.call(["chmod", "+x", filename])
+                top_text = top_text + "'(voice_" + self.voice + ")'"
+            top_text = top_text + "&\nwhile [[ $(echo '()' | festival_client && echo $?) != 0 ]];" \
+                         + " do echo -n ''; done\n\n"
+        final_text = top_text + final_text
+
+        if self.wakecomputer and not isTmpFile:
+            f = tempfile.NamedTemporaryFile()
+            f.write(final_text)
+            f.seek(0)
+            #subprocess.call(['gksudo', '--message', 'testing', 'echo'])
+            subprocess.call(['sudo', 'cp', '--remove-destination', f.name, filename])
+            subprocess.call(['sudo', 'chmod', '700', filename])
+            f.close()
+        else:
+            if os.path.exists(filename):
+                subprocess.call(['rm', '-f', filename])  # necessary because may be owned by root
+            file = open(filename, "w")
+            file.write(final_text)
+            file.close()
+            subprocess.call(["chmod", "+x", filename])
         
     def save_settings(self, filename):
         cronval = ""
@@ -152,26 +166,27 @@ class alarm:
                 command = setalarm_script + ' -c ' + str(minute) + ' ' \
                         + str(hour) + ' ' + str(dom) + ' ' + str(mon) \
                         + ' ' + str(dow) + ' ' + wakeup_script + " " + os.environ['USER'] + " " + alarmnum
-            pre = ['gksudo', '--message', 'Root privileges are necessary to set and remove alarms that wake your computer']
-            command = pre + [command]
+            command = ['sudo'] + re.split(" ", command)
             try:
                 out = subprocess.check_output(command)
                 return [0, out]
             except subprocess.CalledProcessError:
                 return [1, ""]
         else:
-            tmpfile = "/tmp/wakeup_tmp.txt"
-            f = open(tmpfile,'w')
-            subprocess.call(['crontab', '-l'], stdout=f)
-            subprocess.call(['sed', '-i', "/^.*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
-                    + alarmnum + ".*$/d", tmpfile])
-            f.close()
-            f = open(tmpfile,'a')
-            f.write(str(minute) + " " + str(hour) + " " + str(dom) + " " + str(mon) + " " + str(dow))
-            f.write(" " + wakeup_script + " " + os.environ['USER'] + " " + alarmnum + " >/dev/null 2>&1\n")
-            f.close()
-            subprocess.call(['crontab', tmpfile])
-            subprocess.call(['rm', tmpfile])
+            tmpfile = tempfile.NamedTemporaryFile()
+            subprocess.call(['crontab', '-l'], stdout=tmpfile)
+            tmpfile.seek(0)
+            lines = tmpfile.read()
+            lines = re.sub("[^\n]*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
+                           + alarmnum + ".*\n", "", lines)
+            tmpfile.seek(0)
+            tmpfile.truncate()
+            tmpfile.write(lines)
+            tmpfile.write(str(minute) + " " + str(hour) + " " + str(dom) + " " + str(mon) + " " + str(dow))
+            tmpfile.write(" " + wakeup_script + " " + os.environ['USER'] + " " + alarmnum + " >/dev/null 2>&1\n")
+            tmpfile.seek(0)
+            subprocess.call(['crontab', tmpfile.name])
+            tmpfile.close()
             return [0,""]
 
     def remove_command(self, folder, wakeup_script):
@@ -179,21 +194,19 @@ class alarm:
         wakeup_script_meta = re.sub("/", "\\/", wakeup_script)
         sudo = []
         if self.wakecomputer:
-            sudo = ['gksudo', '--message', 'Root privileges are necessary to set and remove alarms that wake your computer']
-        tmpfile = "/tmp/wakeup_tmp.txt"
-        f = open(tmpfile, 'w')
-        if sudo != []:
-            subprocess.call(sudo + ['crontab -l'], stdout=f)
-        else:
-            subprocess.call(['crontab', '-l'], stdout=f)
-        f.close()
-        subprocess.call(['sed', '-i', "/^.*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
-                        + alarmnum + ".*$/d", tmpfile])
-        if sudo != []:
-            subprocess.call(sudo + ['crontab ' + tmpfile])
-        else:
-            subprocess.call(['crontab', tmpfile])
-        subprocess.call(['rm', tmpfile])
+            sudo = ['sudo']
+        tmpfile = tempfile.NamedTemporaryFile()
+        subprocess.call(sudo + ['crontab', '-l'], stdout=tmpfile)
+        tmpfile.seek(0)
+        lines = tmpfile.read()
+        lines = re.sub("[^\n]*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
+                       + alarmnum + ".*\n", "", lines)
+        tmpfile.seek(0)
+        tmpfile.truncate()
+        tmpfile.write(lines)
+        tmpfile.seek(0)
+        subprocess.call(sudo + ['crontab', tmpfile.name])
+        tmpfile.close()
 
     def get_cronvalues(self):
         if self.recurrence == "Cron":

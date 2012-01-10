@@ -8,14 +8,17 @@ wakeup (1.2-0ubuntu1) precise; urgency=low
    - fixed problems to do with hard-coded DISPLAY variable
    - fixed issues with stopping the alarm
    - removed calls to os.system and commands.get(status)output
+   - use secure temp files (LP: 912762)
+   - root-owned chmod 700 playable_text file for boot alarms
    - small bug fixes
   * Updated packaging
    - Removed all perl dependencies
    - wrap-and-sort debian/
    - converted copyright to dep5 format
    - use dh_python2 instead of pysupport
+  * 
 
- -- David Glass <dsglass@gmail.com>  Thu, 05 Jan 2012 16:59:18 -0500
+ -- David Glass <dsglass@gmail.com>  Tue, 10 Jan 2012 01:46:14 -0800
 
 wakeup (1.1-0ubuntu1) precise; urgency=low
 
