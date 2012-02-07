@@ -9,7 +9,8 @@ data_files=[
           ('share/applications', ['data/wakeup.desktop']),
           ('share/man/man1', ['doc/wakeup.1']),
           ('share/man/man1', ['doc/setalarm.1']),
-          ('share/man/man1', ['doc/wakeup-settings.1'])
+          ('share/man/man1', ['doc/wakeup-settings.1']),
+          ('share/polkit-1/actions', ['data/com.ubuntu.wakeup.policy'])
           ]
 for root, dirs, files in os.walk('data/wakeup'):
     for f in files:

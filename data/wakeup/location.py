@@ -4,9 +4,13 @@
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 # Note this function can be imported, and gives a dictionary output of location data
-# as follows: {country_code, country, state, city, postcode, latitude, longitude}.
-# If any of the values are not available, they default to an empty string ('').
-# Data is taken from ip-address.org.
+# as available from the source www.ip-address.org. Data available may depend on location,
+# but should include: 'City', 'State', 'Country', 'Continent', 'Time zone', 'City Lat/Lon',
+# 'Country Lat/Lon', 'Continent Lat/Lon', 'My IP Address', 'My IP Host', 'ISP', 'Postal',
+# and others.
+# Some data about the computer, such as Browser, is useless but left for completion.
+# Additionally, the dict keys 'longitude' and 'latitude' are added for ease of use; they
+# are just taken from key 'City Lat/Lon'.
 
 import urllib2
 import re
@@ -14,37 +18,25 @@ import re
 def get_location():
     # Grab information about location based on IP
     url = 'http://www.ip-address.org'
-    headers = {'User-Agent' : 'Dummy/0.0'}
-    req = urllib2.Request(url, '', headers)
+    req = urllib2.Request(url)
     response = urllib2.urlopen(req,'',5)
     page = response.read()
-    data = re.search("Browser Language.*IP Language",page).group(0)
-    try:
-        country = re.search("Country:</th><td>(.*)&nbsp;&nbsp;", data).group(1)
-    except:
-        country = ''
-    try:
-        country_code = re.search("img src.*\((.*)\).*State:", data).group(1)
-    except:
-        country_code = ''
-    try:
-        state = re.search("State:</th><td class='lookup'>(.*)</td>.*City:", data).group(1)
-    except:
-        state = ''
-    try:
-        city = re.search("City:</th><td>(.*)</td>.*Postal:", data).group(1)
-    except:
-        city = ''
-    try:
-        postcode = re.search("Postal:.*'lookup'>(.*)</td>.*ISP:", data).group(1)
-    except:
-        postcode = ''
-    try:
-        latlon = re.search("City Lat/Lon:.*'lookup'> \((.*)\) / \((.*)\)</td>", data)
-        latitude = latlon.group(1)
-        longitude = latlon.group(2)
-    except:
-        longitude = ''
-        longitude = ''
-
-    return {'country_code':country_code, 'country':country, 'state':state, 'city':city, 'postcode':postcode, 'latitude':latitude, 'longitude':longitude}
+    tables = re.findall("<table.*?</table>", page,flags=re.DOTALL) # find tables
+    table = tables[1] # get the right table
+    table = re.sub(r"<th>([^<]*)<td",r"<th>\1</th><td",table) # fix missing end </th> tags
+    table = re.sub("<br />", ";", table)
+    tableelements = re.findall("<tr>.*?</tr>", table, flags=re.DOTALL)
+    properties = {}
+    for el in tableelements:
+        try: # Get rid of leading junk, which may contain a <td> tag
+            el = re.search('<th>.*', el, re.DOTALL).group(0)
+        except:
+            continue
+        prop = re.search("<th>(.*):\s*</th>", el, flags=re.DOTALL)
+        val = re.search("<td[^<]*>(.*)</td>", el, flags=re.DOTALL)
+        if val: # skip if no value for this property (ie, it is just a header)
+            properties[prop.group(1).strip()] = re.sub("<.*>|&nbsp;", "", val.group(1).strip())
+    # Add latitude and longitude keys for direct ease of use
+    [properties['latitude'],properties['longitude']] = \
+                            re.findall("[0-9\.\-]+", properties['City Lat/Lon'])
+    return properties

@@ -12,7 +12,6 @@ wakeup_folder = "/usr/share/wakeup/"
 sys.path.append(wakeup_folder)
 from alarm import alarm
 import subprocess
-import tempfile
 
 thisscript = os.path.join(wakeup_folder, "setnextalarm.py") + " " + sys.argv[1]
 setalarm_script = "/usr/bin/setalarm"
@@ -51,42 +50,31 @@ for alarm in alarms:
 
 # If no alarms in list, clear root's cron file and unset computer wakeup
 if len(alarms) == 0:
-    tmpfile = tempfile.NamedTemporaryFile()
-    subprocess.call(['sudo', 'crontab', '-l'], stdout=tmpfile)
-    tmpfile.seek(0)
-    lines = tmpfile.read()
-    lines = re.sub("[^\n]*setnextalarm.*\n", "", lines)
-    tmpfile.seek(0)
-    tmpfile.truncate()
-    tmpfile.write(lines)
-    tmpfile.seek(0)
-    subprocess.call(['sudo', 'crontab', tmpfile.name])
+    curcron = subprocess.check_output(['sudo', 'crontab', '-l'])
+    curcron = re.sub('[^\n]*setnextalarm.*\n', '', curcron)
+    updatecron = subprocess.Popen(['crontab', '-'], stdin = subprocess.PIPE)
+    updatecron.communicate(curcron)
     subprocess.call(['sudo', setalarm_script, '-d'])
-    tmpfile.close()
     exit()
 
 minalarm = min(alarmtimes)
 minindex = alarmtimes.index(minalarm)
 mincron = crontimes[minindex]
 # make sure the wakeup is preserved through shutdowns and at alarm times. Set alarms.
-tmpfile = tempfile.NamedTemporaryFile()
-subprocess.call(['sudo', 'crontab', '-l'], stdout=tmpfile)
-tmpfile.seek(0)
-lines = tmpfile.read()
-lines = re.sub("[^\n]*setnextalarm.*\n", "", lines)
-tmpfile.seek(0)
-tmpfile.truncate()
-tmpfile.write(lines)
-tmpfile.write(mincron + ' ' + thisscript +  ' >/dev/null 2>&1\n')
-tmpfile.write('@reboot ' + thisscript + ' >/dev/null 2>&1\n')
+curcron = subprocess.check_output(['sudo', 'crontab', '-l'])
+curcron = re.sub('[^\n]*setnextalarm.*\n', '', curcron)
+updatecron = subprocess.Popen(['crontab', '-'], stdin = subprocess.PIPE)
+newline1 = mincron + ' ' + thisscript +  ' >/dev/null 2>&1\n'
+newline2 = '@reboot ' + thisscript + ' >/dev/null 2>&1\n'
+newcron = curcron + newline1 + newline2
 for i in range(0, len(alarmtimes)):
     if alarmtimes[i] == minalarm:
         alarmnum = re.search("\d+$", alarmfolders[i]).group(0)
-        tmpfile.write(mincron + ' ' + wakeup_script + ' ' + sys.argv[1] + ' ' + alarmnum + \
-                ' >/dev/null 2>&1 #entered by setnextalarm\n')
-tmpfile.seek(0)
-subprocess.call(['sudo', 'crontab', tmpfile.name])
-tmpfile.close()
+        newline = mincron + ' ' + wakeup_script + ' ' + sys.argv[1] + ' ' + alarmnum + \
+                  ' >/dev/null 2>&1 #entered by setnextalarm\n'
+        newcron = newcron + newline
+updatecron.communicate(newcron)
+
 success = True
 try:
     subprocess.check_output(['sudo', setalarm_script, '-u', minalarm])

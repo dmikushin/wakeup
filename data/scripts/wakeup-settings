@@ -11,12 +11,11 @@ from pango import SCALE
 import os
 import re
 import sys
-from commands import getstatusoutput
 import copy
 import pickle
 import threading
 import subprocess
-import tempfile
+import dbus
 
 # Global file variables
 wakeup_script = "/usr/bin/wakeup"
@@ -31,6 +30,7 @@ homewakeupfolder = os.path.join(home, ".wakeup")
 dontshowintrofile = os.path.join(homewakeupfolder, "dontshowintro")
 tmpPlayfile = os.path.join(homewakeupfolder, "playable_tmp")
 voicelistscript = os.path.join(wakeup_folder, "voice_list.sh")
+elevatescript = os.path.join(wakeup_folder, 'wakeupRootHelper')
 
 # import alarm data type
 sys.path.append(wakeup_folder)
@@ -282,18 +282,21 @@ class Wakeup:
     '''Callback for clicking Apply in main window'''
     def apply_clicked (self, widget, data=None):
         # Get elevated privileges if needed; every call to sudo in alarm.py and setnextalarm.py
-        # will then be carried out. All processes not invoked with sudo are still run without
-        # elevated privileges. Must use subprocess.call() for this to work. Also, running sudo -K
-        # before call to gksudo makes sure password is prompted. Otherwise gksudo takes a long time
-        # to run (several seconds)
+        # will then be carried out.
         for alarm in self.oldalarms + self.alarms:
             if alarm.get_property("wakecomputer"):
                 try:
-                    subprocess.call(['sudo', '-K'])
-                    subprocess.call(['gksudo', '--message', 'Root privileges are necessary to set and remove alarms that wake your computer.', 'true'])
+                    action_id='com.ubuntu.wakeup.exec'
+                    bus = dbus.SystemBus()
+                    service = bus.get_object('org.freedesktop.PolicyKit1', '/org/freedesktop/PolicyKit1/Authority')
+                    policy_kit=dbus.Interface(service, 'org.freedesktop.PolicyKit1.Authority')
+                    system_bus_name = bus.get_unique_name()
+                    result = policy_kit.CheckAuthorization(('system-bus-name', {'name' : system_bus_name}), action_id, {}, 1, '')
+                    if not result[0]:
+                        raise BaseException
                 except BaseException as e:
                     print e.args
-                    outscript = 'Unable to set alarms. Root privileges need if using boot option.'
+                    outscript = 'Unable to set alarms. Root privileges needed if using boot option.'
                     self.dialogMessage.set_text(outscript.strip())
                     self.dialogWindow.show()
                     return
@@ -335,7 +338,7 @@ class Wakeup:
         if hasbootalarms or hadbootalarms: #note also removes removed boot alarms.
             output = ""
             try:
-                output = subprocess.check_output(['sudo',setnextalarmscript, os.environ['USER']])
+                output = subprocess.check_output(['pkexec', elevatescript, setnextalarmscript, os.environ['USER']])
                 if not len(self.alarms) == 0 and not output == "":
                     outscript += "Next computer wakeup at: " + output
             except subprocess.CalledProcessError as e:

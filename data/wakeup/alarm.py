@@ -3,8 +3,9 @@
 # Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
-import datetime, re, os, pickle, subprocess, tempfile
+import datetime, re, os, pickle, subprocess
 days_dict = dict(Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6)
+elevatescript = '/usr/share/wakeup/wakeupRootHelper'
 
 class alarm:
 
@@ -105,13 +106,9 @@ class alarm:
         final_text = top_text + final_text
 
         if self.wakecomputer and not isTmpFile:
-            f = tempfile.NamedTemporaryFile()
-            f.write(final_text)
-            f.seek(0)
-            #subprocess.call(['gksudo', '--message', 'testing', 'echo'])
-            subprocess.call(['sudo', 'cp', '--remove-destination', f.name, filename])
-            subprocess.call(['sudo', 'chmod', '700', filename])
-            f.close()
+            createfilescript = '/usr/share/wakeup/createRootPlayfile.py'
+            fileout = subprocess.Popen(['pkexec', elevatescript, createfilescript, filename], stdin=subprocess.PIPE)
+            fileout.communicate(final_text)
         else:
             if os.path.exists(filename):
                 subprocess.call(['rm', '-f', filename])  # necessary because may be owned by root
@@ -166,27 +163,20 @@ class alarm:
                 command = setalarm_script + ' -c ' + str(minute) + ' ' \
                         + str(hour) + ' ' + str(dom) + ' ' + str(mon) \
                         + ' ' + str(dow) + ' ' + wakeup_script + " " + os.environ['USER'] + " " + alarmnum
-            command = ['sudo'] + re.split(" ", command)
+            command = ['pkexec', elevatescript] + re.split(" ", command)
             try:
                 out = subprocess.check_output(command)
                 return [0, out]
             except subprocess.CalledProcessError:
                 return [1, ""]
         else:
-            tmpfile = tempfile.NamedTemporaryFile()
-            subprocess.call(['crontab', '-l'], stdout=tmpfile)
-            tmpfile.seek(0)
-            lines = tmpfile.read()
-            lines = re.sub("[^\n]*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
-                           + alarmnum + ".*\n", "", lines)
-            tmpfile.seek(0)
-            tmpfile.truncate()
-            tmpfile.write(lines)
-            tmpfile.write(str(minute) + " " + str(hour) + " " + str(dom) + " " + str(mon) + " " + str(dow))
-            tmpfile.write(" " + wakeup_script + " " + os.environ['USER'] + " " + alarmnum + " >/dev/null 2>&1\n")
-            tmpfile.seek(0)
-            subprocess.call(['crontab', tmpfile.name])
-            tmpfile.close()
+            curcron = subprocess.check_output(['crontab', '-l'])
+            curcron = re.sub("[^\n]*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
+                                   + alarmnum + ".*\n", "", curcron)
+            updatecron = subprocess.Popen(['crontab', '-'], stdin = subprocess.PIPE)
+            newline = str(minute) + " " + str(hour) + " " + str(dom) + " " + str(mon) + " " + str(dow) + \
+                      " " + wakeup_script + " " + os.environ['USER'] + " " + alarmnum + " >/dev/null 2>&1\n"
+            updatecron.communicate(curcron + newline)
             return [0,""]
 
     def remove_command(self, folder, wakeup_script):
@@ -194,19 +184,12 @@ class alarm:
         wakeup_script_meta = re.sub("/", "\\/", wakeup_script)
         sudo = []
         if self.wakecomputer:
-            sudo = ['sudo']
-        tmpfile = tempfile.NamedTemporaryFile()
-        subprocess.call(sudo + ['crontab', '-l'], stdout=tmpfile)
-        tmpfile.seek(0)
-        lines = tmpfile.read()
-        lines = re.sub("[^\n]*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
-                       + alarmnum + ".*\n", "", lines)
-        tmpfile.seek(0)
-        tmpfile.truncate()
-        tmpfile.write(lines)
-        tmpfile.seek(0)
-        subprocess.call(sudo + ['crontab', tmpfile.name])
-        tmpfile.close()
+            sudo = ['pkexec', elevatescript]
+        curcron = subprocess.check_output(sudo + ['crontab', '-l'])
+        curcron = re.sub("[^\n]*" + wakeup_script_meta + " " + os.environ['USER'] + " " \
+                               + alarmnum + ".*\n", "", curcron)
+        updatecron = subprocess.Popen(sudo + ['crontab', '-'], stdin = subprocess.PIPE)
+        updatecron.communicate(curcron)
 
     def get_cronvalues(self):
         if self.recurrence == "Cron":

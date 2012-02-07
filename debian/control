@@ -11,9 +11,9 @@ Package: wakeup
 Architecture: all
 Depends: curl,
          festival,
-         gksu,
          mpg123,
          python-dateutil,
+         python-dbus,
          python-evolution,
          python-feedparser,
          python-glade2,

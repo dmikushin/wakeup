@@ -20,15 +20,10 @@ if [[ ! $only_print ]]; then
 
     # Clear the system wakeup alarm.
     echo 0 > /sys/class/rtc/rtc0/wakealarm;
-    # Make copy of crontab, delete old alarms
-    tmpfile=$(mktemp)
-    crontab -l > $tmpfile
-    sed -i /^.*setalarm.*$/d $tmpfile
 
     # For delete alarms
     if [[ $1 == "-d" ]]; then
-        crontab $tmpfile
-        rm $tmpfile
+        (crontab -l | sed /^.*setalarm.*$/d) | crontab -
         exit 0
     fi
 fi
@@ -113,8 +108,10 @@ if [[ $1 == "-u" ]]; then
         exit
     fi
     crontab_time=`date -d @$wake_time "+%M %H %d %m %w"`
-    # add to temporary cron file
-    echo "$crontab_time $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
+    newline="$crontab_time $wakeup_script >/dev/null 2>&1 #entered by setalarm"
+    if [[ $wakeup_script != "" ]]; then
+        (crontab -l | sed /^.*setalarm.*$/d; echo $newline) | crontab -
+    fi
     
 # for recurrent alarms
 elif [[ $1 == "-c" ]]; then
@@ -159,7 +156,6 @@ elif [[ $1 == "-c" ]]; then
     done 2>/dev/null
 
     if [[ $date == "" || $wake_time < `date +%s` || `chkw` != 1 ]]; then
-        if [[ ! $only_print ]]; then rm $tmpfile; fi
         echo "The specified cron time does not occur within a year"
         exit 1
     fi
@@ -183,10 +179,12 @@ elif [[ $1 == "-c" ]]; then
     fi
     
     # add cron for setlarm that runs wtih the $wakeup_script and @reboot
-    echo "$2 $3 $4 $5 $6 $0 ${*/\*/\"*\"} >/dev/null 2>&1" >> $tmpfile
-    echo "@reboot $0 ${*/\*/\"*\"} >/dev/null 2>&1" >> $tmpfile
-    # add the cron-recurrent wakeup alarm to temporary cron file
-    echo "$2 $3 $4 $5 $6 $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
+    newline1="$2 $3 $4 $5 $6 $0 ${*/\*/\"*\"} >/dev/null 2>&1\n"
+    newline2="@reboot $0 ${*/\*/\"*\"} >/dev/null 2>&1"
+    if [[ $wakeup_script != "" ]]; then
+        newline3="\n$2 $3 $4 $5 $6 $wakeup_script >/dev/null 2>&1 #entered by setalarm"
+    fi
+    (crontab -l | sed /^.*setalarm.*$/d; echo -e "$newline1$newline2$newline3") | crontab -
 
 # for non-recurring alarms
 else
@@ -201,18 +199,14 @@ else
     fi
     # format $wakeup_time in crontab format.
     crontab_time=`date -d @$wake_time "+%M %H %d %m %w"`
-    # add to temporary cron file
-    echo "$crontab_time $wakeup_script >/dev/null 2>&1 #entered by setalarm" >> $tmpfile
+    if [[ $wakeup_script != "" ]]; then
+        newline="$crontab_time $wakeup_script >/dev/null 2>&1 #entered by setalarm"
+        (crontab -l | sed /^.*setalarm.*$/d; echo $newline) | crontab -
+    fi
 fi
 
-# Actually set alarm and crontab #
-
+# Actually set alarm #
 echo $(( $wake_time - $offset * 60 )) > /sys/class/rtc/rtc0/wakealarm; 
 echo -e "Alarm set to: $(date -d @$wake_time)"
+# Remind user about offset
 if [[ $offset_set ]]; then echo "Computer will wake $offset minutes earlier"; fi
-# Write the actual crontab file and clean up.
-if [[ $wakeup_script == "" ]]; then
-    sed -i '/.*#entered by setalarm/d' $tmpfile
-fi
-crontab $tmpfile
-rm $tmpfile

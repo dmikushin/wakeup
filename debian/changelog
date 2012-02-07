@@ -1,6 +1,7 @@
 wakeup (1.2-0ubuntu1) precise; urgency=low
 
   * New upstream release (LP: #909189).
+   - Moved from using gksudo to using pkexec. Added policy file.
    - Changed weather source to google using python-pywapi
    - Added location.py in wakeup directory as plugin helper
    - Added plugin "Commands" which allows arbitrary user dataitems
@@ -12,12 +13,13 @@ wakeup (1.2-0ubuntu1) precise; urgency=low
    - root-owned chmod 700 playable_text file for boot alarms
    - small bug fixes
   * Updated packaging
+   - replaced gksu with python-dbus in debian/control
    - Removed all perl dependencies
    - wrap-and-sort debian/
    - converted copyright to dep5 format
    - use dh_python2 instead of pysupport
 
- -- David Glass <dsglass@gmail.com>  Tue, 10 Jan 2012 01:46:14 -0800
+ -- David Glass <dsglass@gmail.com>  Tue, 07 Feb 2012 10:36:30 -0800
 
 wakeup (1.1-0ubuntu1) precise; urgency=low
 

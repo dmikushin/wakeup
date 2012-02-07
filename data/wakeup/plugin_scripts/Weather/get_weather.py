@@ -25,7 +25,7 @@ else:
     sys.path.append('/usr/share/wakeup')
     import location
     loc = location.get_location()
-    weather = pywapi.get_weather_from_google(loc['city']+','+loc['state']+','+loc['country'])
+    weather = pywapi.get_weather_from_google(loc['City']+','+loc['State']+','+loc['Country'])
 
 
 # Output the weather

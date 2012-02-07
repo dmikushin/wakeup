@@ -49,7 +49,7 @@ class Weather:
         def run(self):
             import location
             loc = location.get_location()
-            self.location.set_text(loc['city']+','+loc['state']+','+loc['country'])
+            self.location.set_text(loc['City']+','+loc['State']+','+loc['Country'])
 
 
     '''On Checking to set weather ID manually'''

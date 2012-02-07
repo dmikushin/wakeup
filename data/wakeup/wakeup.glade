@@ -440,7 +440,7 @@ Copyright is GPLv3 or later
   <object class="GtkWindow" id="plugin_window">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
-    <property name="title" translatable="yes">Plugins</property>
+    <property name="title" translatable="yes">Preferences</property>
     <property name="window_position">mouse</property>
     <property name="default_width">500</property>
     <property name="default_height">300</property>
@@ -1382,6 +1382,8 @@ Copyright is GPLv3 or later
     <property name="text" translatable="yes">Type your alarm text here, inserting hot text items from the list at the right as desired. For example:
 
 Good morning. Today is $date. The time is $time. It is $temperature degrees outside with $skyconditions skies, and winds $windconditions. Expect $todays_forecast, with a high of $high and low of $low.
+
+Be sure to modify individual plug-in preferences under the "plugins" tab in the Preferences window. This allows you to specify which mp3 file you will hear from the music item, whether to present weather in Farenheit or Celsius, and so on.
 
 Note that hot text items are loaded at the beginning of each paragraph (a new paragraph is specified by leaving one or more blank lines). Hence the time is now $time, whereas in the previous paragraph it might have been a minute earlier.</property>
   </object>
