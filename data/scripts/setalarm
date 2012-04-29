@@ -87,6 +87,7 @@ function read_cron_input
         input=$1
     fi
     # Check for bad input: exit only exits function, need to check for "" output
+    input=$(echo $input | sed s/\"//g)
     if [[ $input =~ [^\-\,0-9\*] ]];  then exit 1; fi
     if [[ $input == "*" ]]; then
         seq $2 $3
