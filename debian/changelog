@@ -1,3 +1,9 @@
+wakeup (1.2-0ubuntu2) precise; urgency=low
+
+  * Fixed inability to set recurring alarms due to quoted asterisks.
+
+ -- David Glass <dsglass@gmail.com>  Mon, 30 Apr 2012 22:31:49 -0700
+
 wakeup (1.2-0ubuntu1) precise; urgency=low
 
   * New upstream release (LP: #909189).

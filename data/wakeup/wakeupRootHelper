@@ -1,0 +1,20 @@
+#!/bin/bash
+# Helper program to allow elevated privaleges for wakeup-settings (and alarm.py)
+# using pkexec without giving away privaleges to other scripts
+# Copyright (C) 2012 David Glass <dsglass@gmail.com>
+# Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
+
+commands=(/usr/bin/setalarm /usr/bin/crontab /usr/share/wakeup/setnextalarm.py /usr/share/wakeup/createRootPlayfile.py)
+allowed=false
+for i in ${commands[@]}; do
+    if [[ $1 = $i ]]; then
+        allowed=true
+    fi
+done
+if [[ $allowed != true ]]; then
+    echo "$1: Elevated command not allowed."
+    exit 1
+else
+    eval $*
+fi
+

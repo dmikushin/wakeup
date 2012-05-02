@@ -36,8 +36,7 @@ alarmtimes = list()
 crontimes = list()
 for alarm in alarms:
     cronstring = alarm.get_property("cronvalue")
-    cronstring = re.sub("\*", '"*"', cronstring)
-    crontimes.append(re.sub('"', '', cronstring))
+    crontimes.append(cronstring)
     try:
         output = subprocess.check_output([setalarm_script, '-p', '-c'] + re.split(' ', cronstring) +  ['-o', '0'])
         alarmtimes.append(output)
