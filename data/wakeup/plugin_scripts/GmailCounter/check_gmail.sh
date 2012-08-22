@@ -11,7 +11,7 @@ times=($(curl -u $username:$password --silent "https://mail.google.com/mail/feed
 		| grep -P "<issued>.*" | sed -r 's/(.*)T24:(.*)/\1T0:\2/' \
 		| sed -r 's/<issued>(.*)T(.*)Z<\/issued>/date +%s --date "\1 \2"/'))
 for (( i = 0; i < ${#times[@]}; i++ )); do
-    times[$i]=$(date +%s -d ${times[$i]})
+    times[$i]=$(eval ${times[$i]})
 done
 last_checked=$(curl -u $username:$password --silent \
 		"https://mail.google.com/mail/feed/atom" | grep -m 1 "<modified>" \

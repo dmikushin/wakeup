@@ -34,7 +34,7 @@ def get_location():
             continue
         prop = re.search("<th>(.*):\s*</th>", el, flags=re.DOTALL)
         val = re.search("<td[^<]*>(.*)</td>", el, flags=re.DOTALL)
-        if val: # skip if no value for this property (ie, it is just a header)
+        if val and prop: # skip if el is just a header
             properties[prop.group(1).strip()] = re.sub("<.*>|&nbsp;", "", val.group(1).strip())
     # Add latitude and longitude keys for direct ease of use
     [properties['latitude'],properties['longitude']] = \

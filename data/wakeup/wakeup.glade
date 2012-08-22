@@ -311,7 +311,7 @@ Each alarm's settings are completely independent. Click "Edit multiple alarms...
                 <property name="can_focus">False</property>
                 <property name="xpad">1</property>
                 <property name="ypad">1</property>
-                <property name="label" translatable="yes">&lt;big&gt;&lt;big&gt;&lt;big&gt;&lt;b&gt;Wakeup 1.2&lt;/b&gt;&lt;/big&gt;&lt;/big&gt;&lt;/big&gt;
+                <property name="label" translatable="yes">&lt;big&gt;&lt;big&gt;&lt;big&gt;&lt;b&gt;Wakeup 1.3&lt;/b&gt;&lt;/big&gt;&lt;/big&gt;&lt;/big&gt;
 
 Copyright (c) David Glass 2012
 &amp;lt;dsglass@gmail.com&amp;gt;

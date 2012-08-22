@@ -281,6 +281,13 @@ class Wakeup:
 
     '''Callback for clicking Apply in main window'''
     def apply_clicked (self, widget, data=None):
+        # Make sure user's crontab is installed
+        try:
+            subprocess.checkoutput(['crontab', '-l'])
+        except:
+            newcron = subprocess.Popen(['crontab', '-'], stdin = subprocess.PIPE)
+            newcron.communicate("")
+
         # Get elevated privileges if needed; every call to sudo in alarm.py and setnextalarm.py
         # will then be carried out.
         for alarm in self.oldalarms + self.alarms:
@@ -294,6 +301,13 @@ class Wakeup:
                     result = policy_kit.CheckAuthorization(('system-bus-name', {'name' : system_bus_name}), action_id, {}, 1, '')
                     if not result[0]:
                         raise BaseException
+
+                    # Make sure root's crontab is installed
+                    try:
+                        subprocess.checkoutput(['pkexec', elevatescript, '/usr/bin/crontab', '-l'])
+                    except:
+                        newcron = subprocess.Popen(['pkexec', elevatescript, '/usr/bin/crontab', '-'], stdin = subprocess.PIPE)
+                        newcron.communicate("")
                 except BaseException as e:
                     print e.args
                     outscript = 'Unable to set alarms. Root privileges needed if using boot option.'

@@ -21,7 +21,7 @@ for root, dirs, files in os.walk('data/wakeup'):
 
 
 setup(name='wakeup',
-      version='1.2',
+      version='1.3',
       description='Fully customizable and extensible talking alarm clock',
       author='David Glass',
       author_email='dsglass@gmail.com',
