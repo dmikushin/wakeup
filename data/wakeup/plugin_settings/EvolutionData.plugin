@@ -5,7 +5,7 @@ S'Read Evolution schedule and tasks'
 p2
 sS'script'
 p3
-S'EvolutionData/read_evolution.sh'
+S'EvolutionData/read_evolution.py'
 p4
 sS'text_output'
 p5

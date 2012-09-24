@@ -283,8 +283,8 @@ class Wakeup:
     def apply_clicked (self, widget, data=None):
         # Make sure user's crontab is installed
         try:
-            subprocess.checkoutput(['crontab', '-l'])
-        except:
+            subprocess.check_output(['crontab', '-l'])
+        except subprocess.CalledProcessError:
             newcron = subprocess.Popen(['crontab', '-'], stdin = subprocess.PIPE)
             newcron.communicate("")
 
@@ -304,8 +304,8 @@ class Wakeup:
 
                     # Make sure root's crontab is installed
                     try:
-                        subprocess.checkoutput(['pkexec', elevatescript, '/usr/bin/crontab', '-l'])
-                    except:
+                        subprocess.check_output(['pkexec', elevatescript, '/usr/bin/crontab', '-l'])
+                    except subprocess.CalledProcessError:
                         newcron = subprocess.Popen(['pkexec', elevatescript, '/usr/bin/crontab', '-'], stdin = subprocess.PIPE)
                         newcron.communicate("")
                 except BaseException as e:

@@ -4,7 +4,7 @@
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
 import re
-import pywapi
+import pywapi, urllib2
 import sys, os
 
 # Get unit preferences
@@ -19,37 +19,52 @@ manual_location = re.search("location=(.*)", plugin_text).group(1)
 
 if (manual_location != 'none'):
     # Using manual location
-    weather = pywapi.get_weather_from_google(manual_location)
+    place = manual_location
+    #weather = pywapi.get_weather_from_yahoo(manual_location)
 else:
     # Get location
     sys.path.append('/usr/share/wakeup')
     import location
     loc = location.get_location()
-    weather = pywapi.get_weather_from_google(loc['City']+','+loc['State']+','+loc['Country'])
+    place = place = loc['City'] + ',' + loc['State'] + ',' + re.search('(.*?)\(',loc['Country']).group(1)
+url = 'http://xoap.weather.com/search/search?where=' + urllib2.quote(place)
+req = urllib2.Request(url)
+response = urllib2.urlopen(req,'',5)
+page = response.read()
+yahooid=re.search('loc id="(.*?)"',page).group(1)
+
+# Get weather
+weather = pywapi.get_weather_from_yahoo(yahooid,units='')
+
 
 
 # Output the weather
 for out in sys.argv[2:len(sys.argv)]:
     if (out == "temperature"):
+        temperature = weather['condition']['temp']
         if temp_unit == "C":
-            print weather['current_conditions']['temp_c'] + '\n'
+            print '%g \n' %round(5.0/9*(float(temperature)-32))
         else:
-            print weather['current_conditions']['temp_f'] + '\n'
+            print temperature + '\n'
     if (out == "skyconditions"):
-        print weather['current_conditions']['condition'] + '\n'
+        print weather['condition']['text'] + '\n'
     if (out == "humidity"):
-        print re.sub("Humidity: ", "", weather['current_conditions']['humidity']) + '\n'
+        humidity = weather['atmosphere']['humidity']
+        if humidity == "":
+            humidity = 'unknown'
+        print humidity + '\n'
     if (out == "windconditions"):
-        winds =   weather['current_conditions']['wind_condition']
-        magnitude = re.search("at (.*) mph", winds).group(1)
-        direction = re.search("Wind: (.*) at", winds).group(1)
-        direction = re.sub("N", "north ", direction)
-        direction = re.sub("E", "east ", direction)
-        direction = re.sub("S", "south ", direction)
-        direction = re.sub("W", "west ", direction)
+        magnitude = weather['wind']['speed']
+        direction = weather['wind']['direction']
+        directions = ['north', 'north east', 'east', 'south east', 'south', 'south west', 'west', 'north west']
+        maxdirs = [22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5]
+        directiontext='north'
+        for i in range(1,len(directions)):
+            if int(direction) > maxdirs[i-1] and int(direction) <= maxdirs[i]:
+                directiontext=directions[i]
         if wind_unit == "knots":
             magnitude = int(round(float(magnitude) * 0.868976242))
-        print direction + " at " + str(magnitude) + " " + wind_unit + '\n'
+        print directiontext + " at " + str(magnitude) + " " + wind_unit + '\n'
     if (out == "high"):
         high =  int(weather['forecasts'][0]['high'])
         if temp_unit == "C":
@@ -63,4 +78,4 @@ for out in sys.argv[2:len(sys.argv)]:
         else:
             print str(low) + '\n'
     if (out == "todays_forecast"):
-        print weather['forecasts'][0]['condition'] + '\n'
+        print weather['forecasts'][0]['text'] + '\n'

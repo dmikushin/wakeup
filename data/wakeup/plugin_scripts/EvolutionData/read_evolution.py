@@ -3,7 +3,7 @@
 # Copyright (C) 2012 David Glass <dsglass@gmail.com>
 # Copyright is GPLv3 or later, see /usr/share/common-licenses/GPL-3
 
-import evolution, urllib, vobject, datetime, dateutil
+import urllib, vobject, datetime, dateutil
 import sys, os
 import re
 
@@ -17,6 +17,8 @@ plugin_file = open(plugin, "r")
 lines = ''.join(plugin_file.readlines())
 plugin_file.close()
 skip_cals = re.search("ignore_cals\s*=\s*(.*)\s*", lines).group(1)
+calendarsfolder = '/home/' + sys.argv[1] + '/.local/share/evolution/calendar'
+tasksfolder = '/home/' + sys.argv[1] + '/.local/share/evolution/tasks'
 
 # initialization
 today = datetime.date.today()
@@ -25,12 +27,29 @@ all_day_events = list()
 todo_list = list()
 
 # list of calendars from evolution
-calendars = evolution.ecal.list_calendars()
+calendars = []
+for root, dirs, files in os.walk(calendarsfolder):
+    for _file in files:
+        if _file.endswith('.ics'):
+            calendars.append(os.path.join(root,_file))
+# list of tasks
+tasklists = []
+for root, dirs, files in os.walk(tasksfolder):
+    for _file in files:
+        if _file.endswith('.ics'):
+            tasklists.append(os.path.join(root,_file))
+
+
 
 for cal in calendars:
     if not re.search('^webcal://', cal[1]):
-        events = evolution.ecal.open_calendar_source(cal[1], evolution.ecal.CAL_SOURCE_TYPE_EVENT)
-        event_list = events.get_all_objects()
+        f = open(cal)
+        calstring = ''.join(f.readlines())
+        f.close()
+        try:
+            event_list = vobject.readOne(calstring).vevent_list
+        except AttributeError:
+            continue
     else: # evolution library does not support webcal ics
         webcal = urllib.urlopen('http://' + cal[1][9:])
         webcalstring = ''.join(webcal.readlines())
@@ -68,13 +87,17 @@ for cal in calendars:
         elif type(start) == datetime.datetime and start.date() == today:
             todays_events.append(parsedEvent)
 
-    todos = evolution.ecal.open_calendar_source(cal[1],evolution.ecal.CAL_SOURCE_TYPE_TODO)
-    if not todos:
-        continue
-    for td in todos.get_all_objects():
-        parsedTd = vobject.readOne(td.get_as_string())
-        if not (hasattr(parsedTd, "percent_complete") and parsedTd.percent_complete == "100"):
-            todo_list.append(parsedTd)
+for tasklist in tasklists:
+    f = open(tasklist)
+    taskliststring = ''.join(f.readlines())
+    f.close()
+    try:
+        todos = vobject.readOne(taskliststring).vtodo_list
+        for td in todos:
+            if not (hasattr(td, "percent_complete") and td.percent_complete == "100"):
+                todo_list.append(td)
+    except AttributeError:
+        pass
 
 for out in to_output:
     if out == "schedule":
@@ -87,6 +110,7 @@ for out in to_output:
             print ", ",
         if not todays_events:
             print "Nothing listed"
+        print ""
     if out == "todo":
         for td in todo_list:
             print td.summary.value + u',',

@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: David Glass <dsglass@gmail.com>
 Build-Depends: cdbs (>= 0.4.90~), debhelper (>= 7), python (>=2.6.6-3~)
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 Homepage: https://launchpad.net/wakeup
 
 Package: wakeup
@@ -14,13 +14,11 @@ Depends: curl,
          mpg123,
          python-dateutil,
          python-dbus,
-         python-evolution,
          python-feedparser,
          python-glade2,
          python-pywapi,
          python-vobject,
          shell-fm,
-         weather-util,
          ${misc:Depends},
          ${python:Depends}
 Suggests: hebcal

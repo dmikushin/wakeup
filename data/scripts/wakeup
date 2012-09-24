@@ -65,7 +65,7 @@ while [ ! ]; do
                 dosudo="sudo"
             fi
             snoozetime=$(date -d "+$snooze min" "+%M %H %d %m %w")
-            newcronline="$snoozetime /usr/bin/wakeup $1 $2 >/dev/null 2>&1 #entered by setnextalarm"
+            newcronline="$snoozetime /usr/bin/wakeup $1 $2 $3 >/dev/null 2>&1 #entered by setnextalarm"
             (eval $dosudo crontab -l; echo $newcronline) | eval $dosudo crontab -
             stop
         fi

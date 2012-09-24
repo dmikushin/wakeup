@@ -1,11 +1,16 @@
 wakeup (1.3-0ubuntu1) quantal; urgency=low
 
-  * New upstream release
+  * New upstream release (LP: # 1040213)
    - Create new crontab if none exists (LP: #998927)
    - Fix setalarm treatment of asterisks (LP: #990946)
    - Fix syntax error in reading gmail (LP: #1002871)
+   - Replace google weather with yahoo (LP: #1049329)
+   - remove dependency on python-evolution (LP: #935883)
+  * Updated packaging
+   - removed Depends:weather-util, replaced by pywapi in v1.2
+   - removed Depends:python-evolution (no longer supported)
 
- -- David Glass <dsglass@gmail.com>  Wed, 22 Aug 2012 10:47:02 -0700
+ -- David Glass <dsglass@gmail.com>  Sun, 23 Sep 2012 19:30:09 -0700
 
 wakeup (1.2-0ubuntu1) precise; urgency=low
 
