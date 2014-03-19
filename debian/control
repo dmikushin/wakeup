@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: David Glass <dsglass@gmail.com>
 Build-Depends: cdbs (>= 0.4.90~), debhelper (>= 7), python (>=2.6.6-3~)
-Standards-Version: 3.9.3
+Standards-Version: 3.9.5
 Homepage: https://launchpad.net/wakeup
 
 Package: wakeup

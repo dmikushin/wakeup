@@ -27,7 +27,7 @@ else:
     import location
     loc = location.get_location()
     place = place = loc['City'] + ',' + loc['State'] + ',' + re.search('(.*?)\(',loc['Country']).group(1)
-url = 'http://xoap.weather.com/search/search?where=' + urllib2.quote(place)
+url = 'http://xoap.weather.com/search/search?where=' + place
 req = urllib2.Request(url)
 response = urllib2.urlopen(req,'',5)
 page = response.read()

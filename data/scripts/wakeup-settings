@@ -243,6 +243,9 @@ class Wakeup:
                 if len(voicesanddescripts[i+1]) > 50:
                     self.window.voicelist.set_value(myiter, 2, description)
                     description = description[0:50] + "..."
+                # Workaround for different voices with identical descriptions
+                while description in self.window.voicedescriptions.keys():
+                    description = description + ' '
                 self.window.voicelist.set_value(myiter, 0, description)
                 self.window.voicedescriptions[description] = voice
 

@@ -205,8 +205,23 @@ else
     fi
 fi
 
+# Account for hardware clock vs UTC mismatch
+hwc=$(cat /sys/class/rtc/rtc0/time) # hwclock time
+hwc=${hwc:0:5}                      # (ignoring seconds)
+tim=$(date -u +%H:%M)               # utc time
+if [[ $hwc == $tim ]]; then
+    # hardware clock is in utc. Do not adjust for time zone
+    tz_offset=0
+else
+    # hardware clock is in local time, not utc. Adjust for tzoffset
+    tz_offset=$(date +%z)
+    tz_hr=${tz_offset:0:3}
+    tz_mn=${tz_offset:0:1}${tz_offset:3:2}
+    tz_offset=$(( $tz_hr * 3600 + $tz_mn * 60 ))
+fi
+
 # Actually set alarm #
-echo $(( $wake_time - $offset * 60 )) > /sys/class/rtc/rtc0/wakealarm; 
+echo $(( $wake_time - $offset * 60 + $tz_offset)) > /sys/class/rtc/rtc0/wakealarm; 
 echo -e "Alarm set to: $(date -d @$wake_time)"
 # Remind user about offset
 if [[ $offset_set ]]; then echo "Computer will wake $offset minutes earlier"; fi

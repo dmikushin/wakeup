@@ -1,6 +1,23 @@
+wakeup (1.4-0ubuntu1) trusty; urgency=low
+
+  * Fix recurring "=" sign in Last.fmGUI (LP: #1062126)
+  * Fix incorrect gathering of weather data (LP: #1248532)
+  * Fix time zone and utc detection for setalarm (LP: #1095187)
+  * Fix incorrect switching of festival voices: (LP: #1198678)
+  * Fix incorrect cron parsing for day of week
+
+ -- David Glass <dsglass@gmail.com>  Wed, 19 Mar 2014 10:21:15 -0700
+
+wakeup (1.3-0ubuntu2) quantal; urgency=low
+
+  * Reintroduce fixed Evolution plugin dropped in -ubuntu2 (LP: #1040213)
+
+ -- David Glass <dsglass@gmail.com>  Sun, 30 Sep 2012 09:51:51 -0700
+
 wakeup (1.3-0ubuntu1) quantal; urgency=low
 
-  * New upstream release (LP: # 1040213)
+  [ David Glass ]
+  * New upstream release (LP: #1040213)
    - Create new crontab if none exists (LP: #998927)
    - Fix setalarm treatment of asterisks (LP: #990946)
    - Fix syntax error in reading gmail (LP: #1002871)
@@ -8,9 +25,19 @@ wakeup (1.3-0ubuntu1) quantal; urgency=low
    - remove dependency on python-evolution (LP: #935883)
   * Updated packaging
    - removed Depends:weather-util, replaced by pywapi in v1.2
-   - removed Depends:python-evolution (no longer supported)
+
+  [ Julian Taylor ]
+  * fix debian/watch
 
  -- David Glass <dsglass@gmail.com>  Sun, 23 Sep 2012 19:30:09 -0700
+
+wakeup (1.2-0ubuntu2) quantal; urgency=low
+
+  * debian/rules: drop EvolutionData plugin; it's not going to work anymore
+    due to python-evolution not being buildable.
+  * debian/control: drop python-evolution from Depends.
+
+ -- Mathieu Trudel-Lapierre <mathieu-tl@ubuntu.com>  Fri, 14 Sep 2012 11:08:08 -0400
 
 wakeup (1.2-0ubuntu1) precise; urgency=low
 

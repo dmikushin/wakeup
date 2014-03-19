@@ -65,7 +65,7 @@ class LastfmPlayer:
         else:
             self.lines = "username=" + self.username.get_text() + "\n" \
                        + "password=" + self.password.get_text() + "\n" \
-                       + "default-radio=lastfm://=" + self.station.get_text() + "\n" \
+                       + "default-radio=lastfm://" + self.station.get_text() + "\n" \
                        + "#duration=" + self.duration.get_text()
         
         lfs_file = open(self.password_file, "w")

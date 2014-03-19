@@ -204,9 +204,8 @@ class alarm:
             now = datetime.datetime.now()
             if now.hour > hour or (now.hour == hour and now.minute >= minute):
                 now = now + datetime.timedelta(days=1)
-            (dom, mon, dow) = (now.day, now.month, now.isoweekday())
-            if dow == 7:
-                dow = 0
+            (dom, mon) = (now.day, now.month)
+            dow = "*"
         elif self.recurrence == "Month":
             [minute, hour, dom, mon, dow] = [int(self.time[1]), int(self.time[0]),
                                              int(self.dom), "*", "*"]
