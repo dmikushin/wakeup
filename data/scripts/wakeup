@@ -23,6 +23,7 @@ volume=$(grep -A 2 "volume" $home/.wakeup/alarm$2/wakeup_settings | awk "NR==3" 
 if [[ $volume == "" ]]; then
     volume=50
 fi
+oldvol=$(/usr/bin/amixer get Master playback | grep -oP "[0-9]+%")
 /usr/bin/amixer set Master playback $volume% unmute
 /usr/bin/amixer set Headphone unmute
 /usr/bin/amixer set Speaker unmute
@@ -39,6 +40,7 @@ function get_ids
 
 function stop
 {
+    /usr/bin/amixer set Master playback $oldvol
     y=($(get_ids $pid) $DBUS_SESSION_BUS_PID)
     kill ${y[@]} &
     exit 0
